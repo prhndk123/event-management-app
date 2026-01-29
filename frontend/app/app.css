@@ -1,0 +1,408 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@font-face {
+  font-family: "Neue Plak";
+  src: url("./assets/fonts/NeuePlak-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Neue Plak";
+  src: url("./assets/fonts/NeuePlak-Light.ttf") format("truetype");
+  font-weight: 300;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Neue Plak";
+  src: url("./assets/fonts/NeuePlak-SemiBold.ttf") format("truetype");
+  font-weight: 600;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Neue Plak";
+  src: url("./assets/fonts/NeuePlak-Bold.ttf") format("truetype");
+  font-weight: 700;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "Neue Plak Text";
+  src: url("./assets/fonts/NeuePlakText-Regular.ttf") format("truetype");
+  font-weight: 400;
+  font-style: normal;
+}
+
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif,
+    "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
+
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  /* =======================
+     RADIUS SCALE
+     ======================= */
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
+  --radius-3xl: calc(var(--radius) + 12px);
+  --radius-4xl: calc(var(--radius) + 16px);
+
+  /* =======================
+     CORE COLORS
+     ======================= */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  /* =======================
+     BRAND / ACTIONS
+     ======================= */
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+
+  /* =======================
+     UI TOKENS
+     ======================= */
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* =======================
+     SIDEBAR
+     ======================= */
+  --color-sidebar: var(--sidebar-background);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* =======================
+     SHADOWS
+     ======================= */
+  --shadow-sm: var(--shadow-sm);
+  --shadow-md: var(--shadow-md);
+  --shadow-lg: var(--shadow-lg);
+  --shadow-xl: var(--shadow-xl);
+
+  --shadow-card: var(--shadow-card);
+  --shadow-card-hover: var(--shadow-card-hover);
+
+  /* =======================
+     GRADIENTS
+     ======================= */
+  --background-image-gradient-hero: var(--gradient-hero);
+  --background-image-gradient-card: var(--gradient-card);
+  --background-image-gradient-overlay: var(--gradient-overlay);
+}
+
+
+:root {
+  /* =======================
+     Base Colors (Light)
+     ======================= */
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.21 0.03 255);
+
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.03 255);
+
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.03 255);
+
+  /* Brand / Actions */
+  --primary: oklch(0.65 0.23 50);
+  --primary-foreground: oklch(1 0 0);
+
+  --secondary: oklch(0.97 0.01 255);
+  --secondary-foreground: oklch(0.21 0.03 255);
+
+  --accent: oklch(0.96 0.07 50);
+  --accent-foreground: oklch(0.55 0.22 50);
+
+  --muted: oklch(0.97 0.01 255);
+  --muted-foreground: oklch(0.55 0.02 255);
+
+  --destructive: oklch(0.62 0.25 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.55 0.17 145);
+  --success-foreground: oklch(1 0 0);
+
+  --warning: oklch(0.75 0.19 85);
+  --warning-foreground: oklch(1 0 0);
+
+  --info: oklch(0.65 0.16 230);
+  --info-foreground: oklch(1 0 0);
+
+  /* UI */
+  --border: oklch(0.92 0.01 255);
+  --input: oklch(0.92 0.01 255);
+  --ring: oklch(0.65 0.23 50);
+
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar-background: oklch(0.98 0 0);
+  --sidebar-foreground: oklch(0.21 0.03 255);
+  --sidebar-primary: oklch(0.65 0.23 50);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.96 0.07 50);
+  --sidebar-accent-foreground: oklch(0.55 0.22 50);
+  --sidebar-border: oklch(0.92 0.01 255);
+  --sidebar-ring: oklch(0.65 0.23 50);
+
+  /* =======================
+     Gradients
+     ======================= */
+  --gradient-hero: linear-gradient(
+    135deg,
+    oklch(0.65 0.23 50) 0%,
+    oklch(0.60 0.25 20) 100%
+  );
+
+  --gradient-card: linear-gradient(
+    180deg,
+    oklch(1 0 0) 0%,
+    oklch(0.98 0.01 255) 100%
+  );
+
+  --gradient-overlay: linear-gradient(
+    180deg,
+    oklch(0 0 0 / 0) 0%,
+    oklch(0 0 0 / 0.7) 100%
+  );
+
+  /* =======================
+     Shadows (Light)
+     ======================= */
+  --shadow-sm: 0 1px 2px oklch(0.21 0.03 255 / 0.05);
+  --shadow-md: 0 4px 6px -1px oklch(0.21 0.03 255 / 0.1),
+               0 2px 4px -2px oklch(0.21 0.03 255 / 0.1);
+  --shadow-lg: 0 10px 15px -3px oklch(0.21 0.03 255 / 0.1),
+               0 4px 6px -4px oklch(0.21 0.03 255 / 0.1);
+  --shadow-xl: 0 20px 25px -5px oklch(0.21 0.03 255 / 0.1),
+               0 8px 10px -6px oklch(0.21 0.03 255 / 0.1);
+  --shadow-card: 0 2px 8px -2px oklch(0.21 0.03 255 / 0.08),
+                 0 4px 16px -4px oklch(0.21 0.03 255 / 0.12);
+  --shadow-card-hover: 0 8px 24px -4px oklch(0.21 0.03 255 / 0.15),
+                       0 16px 32px -8px oklch(0.21 0.03 255 / 0.1);
+}
+
+.dark {
+  --background: oklch(0.12 0.03 255);
+  --foreground: oklch(0.98 0 0);
+
+  --card: oklch(0.16 0.03 255);
+  --card-foreground: oklch(0.98 0 0);
+
+  --popover: oklch(0.16 0.03 255);
+  --popover-foreground: oklch(0.98 0 0);
+
+  --primary: oklch(0.65 0.23 50);
+  --primary-foreground: oklch(0.12 0.03 255);
+
+  --secondary: oklch(0.22 0.03 255);
+  --secondary-foreground: oklch(0.98 0 0);
+
+  --accent: oklch(0.25 0.10 50);
+  --accent-foreground: oklch(0.80 0.18 50);
+
+  --muted: oklch(0.22 0.03 255);
+  --muted-foreground: oklch(0.65 0.02 255);
+
+  --destructive: oklch(0.55 0.20 25);
+  --destructive-foreground: oklch(1 0 0);
+
+  --success: oklch(0.65 0.16 145);
+  --warning: oklch(0.75 0.19 85);
+  --info: oklch(0.65 0.16 230);
+
+  --border: oklch(0.28 0.03 255);
+  --input: oklch(0.28 0.03 255);
+  --ring: oklch(0.65 0.23 50);
+
+  --sidebar-background: oklch(0.12 0.03 255);
+  --sidebar-foreground: oklch(0.98 0 0);
+  --sidebar-border: oklch(0.28 0.03 255);
+
+  /* Dark Shadows */
+  --shadow-sm: 0 1px 2px oklch(0 0 0 / 0.4);
+  --shadow-md: 0 4px 6px -1px oklch(0 0 0 / 0.5),
+               0 2px 4px -2px oklch(0 0 0 / 0.5);
+  --shadow-lg: 0 10px 15px -3px oklch(0 0 0 / 0.6),
+               0 4px 6px -4px oklch(0 0 0 / 0.6);
+}
+
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: Neue Plak,'Plus Jakarta Sans', system-ui, sans-serif;
+  }
+}
+
+@layer components {
+  .container-narrow {
+    @apply max-w-5xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-wide {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .btn-gradient {
+    background: var(--gradient-hero);
+    @apply text-white font-semibold transition-all duration-300;
+  }
+
+  .btn-gradient:hover {
+    @apply opacity-90 scale-[1.02];
+    box-shadow: 0 8px 24px -4px hsla(24, 95%, 53%, 0.4);
+  }
+
+  .card-elevated {
+    box-shadow: var(--shadow-card);
+    @apply bg-card rounded-xl transition-all duration-300;
+  }
+
+  .card-elevated:hover {
+    box-shadow: var(--shadow-card-hover);
+    @apply -translate-y-1;
+  }
+
+  .text-gradient {
+    background: var(--gradient-hero);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .overlay-gradient {
+    background: var(--gradient-overlay);
+  }
+
+  /* Status badges */
+  .badge-success {
+    @apply bg-success/10 text-success border-success/20;
+  }
+
+  .badge-warning {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+
+  .badge-destructive {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+
+  .badge-info {
+    @apply bg-info/10 text-info border-info/20;
+  }
+
+  /* Input focus ring */
+  .input-focus {
+    @apply focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-out forwards;
+  }
+
+  .animate-slide-up {
+    animation: slideUp 0.5s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.3s ease-out forwards;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes scaleIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+}
+
