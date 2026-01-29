@@ -1,51 +1,65 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Calendar, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Label } from '~/components/ui/label';
-import { Checkbox } from '~/components/ui/checkbox';
-import { useAuthStore } from '~/store/auth-store';
-import { toast } from 'sonner';
-
-const loginSchema = z.object({
-  email: z.string().email('Please enter a valid email'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  remember: z.boolean().optional(),
-});
-
-type LoginFormData = z.infer<typeof loginSchema>;
+import { useState } from "react";
+import { Link, useNavigate } from "react-router";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Calendar, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Checkbox } from "~/components/ui/checkbox";
+import { toast } from "sonner";
+import { loginSchema, type LoginSchema } from "~/modules/auth/auth.schema";
+import { useAuthStore } from "~/modules/auth/auth.store";
+import { useMutation } from "@tanstack/react-query";
+import { authService } from "~/modules/auth/auth.service";
 
 export default function LoginPage() {
   const navigate = useNavigate();
-  const { login, isLoading } = useAuthStore();
+  const { setAuth } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-  } = useForm<LoginFormData>({
+  } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      email: "",
+      password: "",
       remember: false,
     },
   });
 
-  const onSubmit = async (data: LoginFormData) => {
-    try {
-      await login(data.email, data.password);
-      toast.success('Welcome back!');
-      navigate('/');
-    } catch (error) {
-      toast.error('Login failed. Please try again.');
-    }
+  const { mutate: login, isPending: isLoading } = useMutation({
+    mutationFn: async (data: LoginSchema) => {
+      return await authService.login(data);
+    },
+    onSuccess: (data) => {
+      setAuth({
+        user: {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          avatar: data.avatar,
+          role: data.role,
+          point: data.point,
+        },
+        token: data.accessToken,
+      });
+      toast.success("Welcome back!");
+      navigate("/");
+    },
+    onError: (error: any) => {
+      toast.error(
+        error.response?.data?.message || "Login failed. Please try again.",
+      );
+    },
+  });
+
+  const onSubmit = (data: LoginSchema) => {
+    login(data);
   };
 
   return (
@@ -65,7 +79,9 @@ export default function LoginPage() {
             <span className="text-2xl font-bold text-foreground">Eventku</span>
           </Link>
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">Welcome back</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Welcome back
+          </h1>
           <p className="text-muted-foreground mb-8">
             Sign in to your account to continue
           </p>
@@ -78,10 +94,12 @@ export default function LoginPage() {
                 type="email"
                 placeholder="Enter your email"
                 className="mt-1.5 input-focus"
-                {...register('email')}
+                {...register("email")}
               />
               {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -98,10 +116,10 @@ export default function LoginPage() {
               <div className="relative mt-1.5">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Enter your password"
                   className="pr-10 input-focus"
-                  {...register('password')}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -116,13 +134,18 @@ export default function LoginPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
             <div className="flex items-center gap-2">
-              <Checkbox id="remember" {...register('remember')} />
-              <Label htmlFor="remember" className="text-sm font-normal cursor-pointer">
+              <Checkbox id="remember" {...register("remember")} />
+              <Label
+                htmlFor="remember"
+                className="text-sm font-normal cursor-pointer"
+              >
                 Remember me for 30 days
               </Label>
             </div>
@@ -139,28 +162,28 @@ export default function LoginPage() {
                   Signing in...
                 </>
               ) : (
-                'Sign In'
+                "Sign In"
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-8">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-primary font-medium hover:underline">
+            Don't have an account?{" "}
+            <Link
+              to="/register"
+              className="text-primary font-medium hover:underline"
+            >
               Sign up
             </Link>
           </p>
 
-          {/* Demo Credentials */}
-          <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
-            <p className="text-xs text-muted-foreground text-center mb-2">
-              Demo credentials
-            </p>
-            <div className="text-xs text-center space-y-1">
-              <p><strong>Customer:</strong> john@example.com</p>
-              <p><strong>Organizer:</strong> organizer@example.com</p>
-              <p className="text-muted-foreground">(any password works)</p>
-            </div>
+          <div className="mt-8 pt-6 border-t border-border">
+            <Link
+              to="/"
+              className="text-sm text-muted-foreground hover:text-primary transition-colors"
+            >
+              ← Back to Homepage
+            </Link>
           </div>
         </motion.div>
       </div>
@@ -176,7 +199,8 @@ export default function LoginPage() {
         <div className="absolute bottom-0 left-0 right-0 p-12">
           <blockquote className="text-primary-foreground">
             <p className="text-2xl font-semibold mb-4">
-              "Eventku made it so easy to find and book amazing events. The experience is seamless!"
+              "Eventku made it so easy to find and book amazing events. The
+              experience is seamless!"
             </p>
             <footer className="text-primary-foreground/80">
               — Sarah Johnson, Event Enthusiast

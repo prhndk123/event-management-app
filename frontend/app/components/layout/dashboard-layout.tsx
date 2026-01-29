@@ -1,29 +1,29 @@
-import { Link, Outlet, useLocation } from 'react-router';
-import { 
-  Calendar, 
-  LayoutDashboard, 
-  Users, 
-  CreditCard, 
+import { Link, Outlet, useLocation } from "react-router";
+import {
+  Calendar,
+  LayoutDashboard,
+  Users,
+  CreditCard,
   BarChart3,
   Tag,
   Settings,
   Menu,
-  ChevronLeft
-} from 'lucide-react';
-import { useState } from 'react';
-import { cn } from '~/lib/utils';
-import { Button } from '~/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import { useAuthStore } from '~/store/auth-store';
+  ChevronLeft,
+} from "lucide-react";
+import { useState } from "react";
+import { cn } from "~/lib/utils";
+import { Button } from "~/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { useAuthStore } from "~/modules/auth/auth.store";
 
 const sidebarLinks = [
-  { href: '/dashboard', label: 'Overview', icon: LayoutDashboard },
-  { href: '/dashboard/events', label: 'Events', icon: Calendar },
-  { href: '/dashboard/transactions', label: 'Transactions', icon: CreditCard },
-  { href: '/dashboard/attendees', label: 'Attendees', icon: Users },
-  { href: '/dashboard/vouchers', label: 'Vouchers', icon: Tag },
-  { href: '/dashboard/statistics', label: 'Statistics', icon: BarChart3 },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: "/dashboard", label: "Overview", icon: LayoutDashboard },
+  { href: "/dashboard/events", label: "Events", icon: Calendar },
+  { href: "/dashboard/transactions", label: "Transactions", icon: CreditCard },
+  { href: "/dashboard/attendees", label: "Attendees", icon: Users },
+  { href: "/dashboard/vouchers", label: "Vouchers", icon: Tag },
+  { href: "/dashboard/statistics", label: "Statistics", icon: BarChart3 },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export default function DashboardLayout() {
@@ -37,7 +37,7 @@ export default function DashboardLayout() {
       <aside
         className={cn(
           "fixed left-0 top-0 z-40 h-screen bg-card border-r border-border transition-all duration-300",
-          sidebarOpen ? "w-64" : "w-20"
+          sidebarOpen ? "w-64" : "w-20",
         )}
       >
         {/* Sidebar Header */}
@@ -56,10 +56,12 @@ export default function DashboardLayout() {
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="hidden lg:flex"
           >
-            <ChevronLeft className={cn(
-              "h-5 w-5 transition-transform",
-              !sidebarOpen && "rotate-180"
-            )} />
+            <ChevronLeft
+              className={cn(
+                "h-5 w-5 transition-transform",
+                !sidebarOpen && "rotate-180",
+              )}
+            />
           </Button>
         </div>
 
@@ -75,7 +77,7 @@ export default function DashboardLayout() {
                   "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",
                   isActive
                     ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted",
                 )}
               >
                 <link.icon className="h-5 w-5 shrink-0" />
@@ -95,7 +97,9 @@ export default function DashboardLayout() {
               </Avatar>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{user.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {user.email}
+                </p>
               </div>
             </div>
           </div>
@@ -103,10 +107,12 @@ export default function DashboardLayout() {
       </aside>
 
       {/* Main Content */}
-      <div className={cn(
-        "transition-all duration-300",
-        sidebarOpen ? "lg:ml-64" : "lg:ml-20"
-      )}>
+      <div
+        className={cn(
+          "transition-all duration-300",
+          sidebarOpen ? "lg:ml-64" : "lg:ml-20",
+        )}
+      >
         {/* Top Bar */}
         <header className="sticky top-0 z-30 h-16 bg-background/95 backdrop-blur border-b border-border">
           <div className="flex h-full items-center justify-between px-4 lg:px-8">

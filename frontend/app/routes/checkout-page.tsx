@@ -1,25 +1,25 @@
-import { useState } from 'react';
-import { useNavigate, Link } from 'react-router';
-import { motion } from 'framer-motion';
-import { 
-  ChevronLeft, 
-  Tag, 
-  Coins, 
+import { useState } from "react";
+import { useNavigate, Link } from "react-router";
+import { motion } from "framer-motion";
+import {
+  ChevronLeft,
+  Tag,
+  Coins,
   Ticket,
   Trash2,
   Loader2,
-  ShoppingCart
-} from 'lucide-react';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Label } from '~/components/ui/label';
-import { Separator } from '~/components/ui/separator';
-import { Slider } from '~/components/ui/slider';
-import { EmptyState } from '~/components/shared/empty-state';
-import { useCartStore } from '~/store/cart-store';
-import { useAuthStore } from '~/store/auth-store';
-import { formatCurrency, formatDate } from '~/types';
-import { toast } from 'sonner';
+  ShoppingCart,
+} from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Separator } from "~/components/ui/separator";
+import { Slider } from "~/components/ui/slider";
+import { EmptyState } from "~/components/shared/empty-state";
+import { useCartStore } from "~/store/cart-store";
+import { useAuthStore } from "~/modules/auth/auth.store";
+import { formatCurrency, formatDate } from "~/types";
+import { toast } from "sonner";
 
 export default function CheckoutPage() {
   const navigate = useNavigate();
@@ -43,8 +43,8 @@ export default function CheckoutPage() {
     clearCart,
   } = useCartStore();
 
-  const [voucherCode, setVoucherCode] = useState('');
-  const [couponCode, setCouponCode] = useState('');
+  const [voucherCode, setVoucherCode] = useState("");
+  const [couponCode, setCouponCode] = useState("");
   const [isProcessing, setIsProcessing] = useState(false);
 
   const subtotal = getSubtotal();
@@ -54,50 +54,50 @@ export default function CheckoutPage() {
 
   const handleApplyVoucher = () => {
     if (!voucherCode.trim()) {
-      toast.error('Please enter a voucher code');
+      toast.error("Please enter a voucher code");
       return;
     }
 
     // Check if voucher exists in any cart item's event
     const event = items[0]?.event;
     const voucher = event?.vouchers.find(
-      v => v.code.toLowerCase() === voucherCode.toLowerCase()
+      (v) => v.code.toLowerCase() === voucherCode.toLowerCase(),
     );
 
     if (voucher) {
       applyVoucher(voucher);
-      toast.success('Voucher applied successfully!');
-      setVoucherCode('');
+      toast.success("Voucher applied successfully!");
+      setVoucherCode("");
     } else {
-      toast.error('Invalid voucher code');
+      toast.error("Invalid voucher code");
     }
   };
 
   const handleApplyCoupon = () => {
     if (!couponCode.trim()) {
-      toast.error('Please enter a coupon code');
+      toast.error("Please enter a coupon code");
       return;
     }
 
     // Mock coupon validation
-    if (couponCode.toUpperCase() === 'WELCOME100K') {
+    if (couponCode.toUpperCase() === "WELCOME100K") {
       applyCoupon(couponCode, 100000);
-      toast.success('Coupon applied! IDR 100,000 discount');
-      setCouponCode('');
+      toast.success("Coupon applied! IDR 100,000 discount");
+      setCouponCode("");
     } else {
-      toast.error('Invalid coupon code');
+      toast.error("Invalid coupon code");
     }
   };
 
   const handleCheckout = async () => {
     setIsProcessing(true);
-    
+
     // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast.success('Order placed successfully!');
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
+    toast.success("Order placed successfully!");
     clearCart();
-    navigate('/payment/txn-new');
+    navigate("/payment/txn-new");
     setIsProcessing(false);
   };
 
@@ -110,8 +110,8 @@ export default function CheckoutPage() {
             title="Your cart is empty"
             description="Browse events and add tickets to your cart to continue."
             action={{
-              label: 'Browse Events',
-              onClick: () => navigate('/events'),
+              label: "Browse Events",
+              onClick: () => navigate("/events"),
             }}
           />
         </div>
@@ -178,7 +178,12 @@ export default function CheckoutPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.ticketType.id, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.ticketType.id,
+                              item.quantity - 1,
+                            )
+                          }
                         >
                           -
                         </Button>
@@ -187,7 +192,12 @@ export default function CheckoutPage() {
                           variant="outline"
                           size="icon"
                           className="h-8 w-8"
-                          onClick={() => updateQuantity(item.ticketType.id, item.quantity + 1)}
+                          onClick={() =>
+                            updateQuantity(
+                              item.ticketType.id,
+                              item.quantity + 1,
+                            )
+                          }
                         >
                           +
                         </Button>
@@ -221,11 +231,14 @@ export default function CheckoutPage() {
               {appliedVoucher ? (
                 <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
                   <div>
-                    <p className="font-medium text-success">{appliedVoucher.code}</p>
+                    <p className="font-medium text-success">
+                      {appliedVoucher.code}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      {appliedVoucher.discountType === 'percentage'
+                      {appliedVoucher.discountType === "percentage"
                         ? `${appliedVoucher.discountAmount}% off`
-                        : formatCurrency(appliedVoucher.discountAmount) + ' off'}
+                        : formatCurrency(appliedVoucher.discountAmount) +
+                          " off"}
                     </p>
                   </div>
                   <Button
@@ -267,7 +280,9 @@ export default function CheckoutPage() {
               {appliedCouponCode ? (
                 <div className="flex items-center justify-between p-3 rounded-lg bg-success/10 border border-success/20">
                   <div>
-                    <p className="font-medium text-success">{appliedCouponCode}</p>
+                    <p className="font-medium text-success">
+                      {appliedCouponCode}
+                    </p>
                     <p className="text-sm text-muted-foreground">
                       {formatCurrency(couponDiscount)} off
                     </p>
@@ -314,10 +329,14 @@ export default function CheckoutPage() {
 
                 <div className="space-y-4">
                   <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Available Points</span>
-                    <span className="font-medium">{formatCurrency(user.points)}</span>
+                    <span className="text-muted-foreground">
+                      Available Points
+                    </span>
+                    <span className="font-medium">
+                      {formatCurrency(user.points)}
+                    </span>
                   </div>
-                  
+
                   <div>
                     <div className="flex justify-between text-sm mb-2">
                       <Label>Points to use</Label>
@@ -401,12 +420,12 @@ export default function CheckoutPage() {
                     Processing...
                   </>
                 ) : (
-                  'Proceed to Payment'
+                  "Proceed to Payment"
                 )}
               </Button>
 
               <p className="text-xs text-muted-foreground text-center mt-4">
-                By continuing, you agree to our{' '}
+                By continuing, you agree to our{" "}
                 <Link to="/terms" className="text-primary hover:underline">
                   Terms of Service
                 </Link>

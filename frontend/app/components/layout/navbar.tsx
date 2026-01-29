@@ -1,41 +1,41 @@
-import { Link, useLocation } from 'react-router';
-import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  Menu, 
-  Search, 
-  User, 
+import { Link, useLocation } from "react-router";
+import { motion } from "framer-motion";
+import {
+  Calendar,
+  Menu,
+  Search,
+  User,
   X,
   LogOut,
   LayoutDashboard,
   Ticket,
   Plus,
-  Settings
-} from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '~/components/ui/button';
+  Settings,
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '~/components/ui/dropdown-menu';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import { useAuthStore } from '~/store/auth-store';
+} from "~/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { useAuthStore } from "~/modules/auth/auth.store";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, logout } = useAuthStore();
   const location = useLocation();
 
-  const isOrganizer = user?.role === 'organizer';
+  const isOrganizer = user?.role === "ORGANIZER";
 
   const navLinks = [
-    { href: '/events', label: 'Browse Events' },
-    { href: '/events?category=music', label: 'Music' },
-    { href: '/events?category=tech', label: 'Tech' },
-    { href: '/events?category=food', label: 'Food' },
+    { href: "/events", label: "Browse Events" },
+    { href: "/events?category=music", label: "Music" },
+    { href: "/events?category=tech", label: "Tech" },
+    { href: "/events?category=food", label: "Food" },
   ];
 
   return (
@@ -66,7 +66,12 @@ export function Navbar() {
           {/* Right Side Actions */}
           <div className="flex items-center gap-3">
             {/* Search Button */}
-            <Button variant="ghost" size="icon" asChild className="hidden sm:flex">
+            <Button
+              variant="ghost"
+              size="icon"
+              asChild
+              className="hidden sm:flex"
+            >
               <Link to="/events">
                 <Search className="h-5 w-5" />
               </Link>
@@ -76,7 +81,12 @@ export function Navbar() {
               <>
                 {/* Create Event (Organizer) */}
                 {isOrganizer && (
-                  <Button asChild variant="outline" size="sm" className="hidden sm:flex">
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="hidden sm:flex"
+                  >
                     <Link to="/dashboard/events/create">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Event
@@ -87,7 +97,11 @@ export function Navbar() {
                 {/* User Menu */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-full"
+                    >
                       <Avatar className="h-8 w-8">
                         <AvatarImage src={user.avatar} alt={user.name} />
                         <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
@@ -97,7 +111,9 @@ export function Navbar() {
                   <DropdownMenuContent align="end" className="w-56 bg-popover">
                     <div className="px-3 py-2">
                       <p className="text-sm font-medium">{user.name}</p>
-                      <p className="text-xs text-muted-foreground">{user.email}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {user.email}
+                      </p>
                     </div>
                     <DropdownMenuSeparator />
                     {isOrganizer ? (
@@ -109,7 +125,10 @@ export function Navbar() {
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
-                          <Link to="/dashboard/events" className="cursor-pointer">
+                          <Link
+                            to="/dashboard/events"
+                            className="cursor-pointer"
+                          >
                             <Calendar className="h-4 w-4 mr-2" />
                             My Events
                           </Link>
@@ -138,7 +157,7 @@ export function Navbar() {
                       </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem 
+                    <DropdownMenuItem
                       className="text-destructive cursor-pointer"
                       onClick={logout}
                     >
@@ -166,7 +185,11 @@ export function Navbar() {
               className="md:hidden"
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             >
-              {isMobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {isMobileMenuOpen ? (
+                <X className="h-5 w-5" />
+              ) : (
+                <Menu className="h-5 w-5" />
+              )}
             </Button>
           </div>
         </div>
@@ -175,7 +198,7 @@ export function Navbar() {
         {isMobileMenuOpen && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
+            animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t border-border py-4"
           >

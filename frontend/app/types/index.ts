@@ -5,7 +5,7 @@ export interface User {
   email: string;
   name: string;
   avatar?: string;
-  role: 'customer' | 'organizer';
+  role: "CUSTOMER" | "ORGANIZER";
   referralCode: string;
   points: number;
   createdAt: string;
@@ -28,7 +28,7 @@ export interface Event {
   organizer: Organizer;
   ticketTypes: TicketType[];
   vouchers: Voucher[];
-  status: 'draft' | 'published' | 'cancelled' | 'completed';
+  status: "draft" | "published" | "cancelled" | "completed";
   createdAt: string;
 }
 
@@ -55,7 +55,7 @@ export interface Voucher {
   id: string;
   code: string;
   discountAmount: number;
-  discountType: 'percentage' | 'fixed';
+  discountType: "percentage" | "fixed";
   startDate: string;
   endDate: string;
   usageLimit: number;
@@ -90,13 +90,13 @@ export interface Transaction {
   expiresAt: string;
 }
 
-export type TransactionStatus = 
-  | 'waiting_payment'
-  | 'waiting_confirmation'
-  | 'done'
-  | 'rejected'
-  | 'expired'
-  | 'cancelled';
+export type TransactionStatus =
+  | "waiting_payment"
+  | "waiting_confirmation"
+  | "done"
+  | "rejected"
+  | "expired"
+  | "cancelled";
 
 export interface Review {
   id: string;
@@ -115,74 +115,74 @@ export interface PointHistory {
   id: string;
   userId: string;
   amount: number;
-  type: 'earned' | 'used' | 'expired';
+  type: "earned" | "used" | "expired";
   description: string;
   createdAt: string;
   expiresAt?: string;
 }
 
-export type EventCategory = 
-  | 'music'
-  | 'business'
-  | 'food'
-  | 'health'
-  | 'sports'
-  | 'arts'
-  | 'tech'
-  | 'education'
-  | 'community'
-  | 'other';
+export type EventCategory =
+  | "music"
+  | "business"
+  | "food"
+  | "health"
+  | "sports"
+  | "arts"
+  | "tech"
+  | "education"
+  | "community"
+  | "other";
 
 export const EVENT_CATEGORIES: { value: EventCategory; label: string }[] = [
-  { value: 'music', label: 'Music & Concerts' },
-  { value: 'business', label: 'Business & Professional' },
-  { value: 'food', label: 'Food & Drink' },
-  { value: 'health', label: 'Health & Wellness' },
-  { value: 'sports', label: 'Sports & Fitness' },
-  { value: 'arts', label: 'Arts & Culture' },
-  { value: 'tech', label: 'Technology' },
-  { value: 'education', label: 'Education' },
-  { value: 'community', label: 'Community' },
-  { value: 'other', label: 'Other' },
+  { value: "music", label: "Music & Concerts" },
+  { value: "business", label: "Business & Professional" },
+  { value: "food", label: "Food & Drink" },
+  { value: "health", label: "Health & Wellness" },
+  { value: "sports", label: "Sports & Fitness" },
+  { value: "arts", label: "Arts & Culture" },
+  { value: "tech", label: "Technology" },
+  { value: "education", label: "Education" },
+  { value: "community", label: "Community" },
+  { value: "other", label: "Other" },
 ];
 
 export const LOCATIONS = [
-  'Jakarta',
-  'Bandung',
-  'Surabaya',
-  'Yogyakarta',
-  'Bali',
-  'Semarang',
-  'Medan',
-  'Makassar',
-  'Online',
+  "Jakarta",
+  "Bandung",
+  "Surabaya",
+  "Yogyakarta",
+  "Bali",
+  "Semarang",
+  "Medan",
+  "Makassar",
+  "Online",
 ];
 
 // ============= Utility Functions =============
 
 export function formatCurrency(amount: number): string {
-  if (amount === 0) return 'Free';
-  return new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
+  if (amount === 0) return "Free";
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
 export function formatDate(dateString: string): string {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    weekday: 'short',
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
+  return new Date(dateString).toLocaleDateString("en-US", {
+    weekday: "short",
+    year: "numeric",
+    month: "short",
+    day: "numeric",
   });
 }
 
 export function formatTime(dateString: string): string {
-  return new Date(dateString).toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
+  return new Date(dateString).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
   });
 }
 
@@ -192,24 +192,24 @@ export function formatDateTime(dateString: string): string {
 
 export function getTransactionStatusLabel(status: TransactionStatus): string {
   const labels: Record<TransactionStatus, string> = {
-    waiting_payment: 'Waiting for Payment',
-    waiting_confirmation: 'Waiting for Confirmation',
-    done: 'Completed',
-    rejected: 'Rejected',
-    expired: 'Expired',
-    cancelled: 'Cancelled',
+    waiting_payment: "Waiting for Payment",
+    waiting_confirmation: "Waiting for Confirmation",
+    done: "Completed",
+    rejected: "Rejected",
+    expired: "Expired",
+    cancelled: "Cancelled",
   };
   return labels[status];
 }
 
 export function getTransactionStatusColor(status: TransactionStatus): string {
   const colors: Record<TransactionStatus, string> = {
-    waiting_payment: 'warning',
-    waiting_confirmation: 'info',
-    done: 'success',
-    rejected: 'destructive',
-    expired: 'muted',
-    cancelled: 'muted',
+    waiting_payment: "warning",
+    waiting_confirmation: "info",
+    done: "success",
+    rejected: "destructive",
+    expired: "muted",
+    cancelled: "muted",
   };
   return colors[status];
 }
