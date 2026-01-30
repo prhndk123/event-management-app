@@ -14,7 +14,7 @@ import { useState } from "react";
 import { cn } from "~/lib/utils";
 import { Button } from "~/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { useAuthStore } from "~/modules/auth/auth.store";
+import { useAuthStore } from "~/store/auth-store";
 
 const sidebarLinks = [
   { href: "/dashboard", label: "Overview", icon: LayoutDashboard },

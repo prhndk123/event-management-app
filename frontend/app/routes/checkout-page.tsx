@@ -17,7 +17,7 @@ import { Separator } from "~/components/ui/separator";
 import { Slider } from "~/components/ui/slider";
 import { EmptyState } from "~/components/shared/empty-state";
 import { useCartStore } from "~/store/cart-store";
-import { useAuthStore } from "~/modules/auth/auth.store";
+import { useAuthStore } from "~/store/auth-store";
 import { formatCurrency, formatDate } from "~/types";
 import { toast } from "sonner";
 

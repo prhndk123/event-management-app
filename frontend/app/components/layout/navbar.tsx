@@ -22,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
-import { useAuthStore } from "~/modules/auth/auth.store";
+import { useAuthStore } from "~/store/auth-store";
 
 export function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

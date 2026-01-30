@@ -12,7 +12,7 @@ import { Label } from "~/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import { Separator } from "~/components/ui/separator";
-import { useAuthStore } from "~/modules/auth/auth.store";
+import { useAuthStore } from "~/store/auth-store";
 import { Checkbox } from "~/components/ui/checkbox";
 
 export default function SettingsPage() {

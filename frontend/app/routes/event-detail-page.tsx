@@ -28,7 +28,7 @@ import {
 import { RatingStars } from "~/components/shared/rating-stars";
 import { useEventStore } from "~/store/event-store";
 import { useCartStore } from "~/store/cart-store";
-import { useAuthStore } from "~/modules/auth/auth.store";
+import { useAuthStore } from "~/store/auth-store";
 import { formatCurrency, formatDate, formatTime, TicketType } from "~/types";
 import { mockReviews } from "~/data/mock-data";
 import { toast } from "sonner";

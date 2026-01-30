@@ -2,21 +2,24 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { authService } from "./auth.service";
 import type { LoginSchema, RegisterSchema } from "./auth.schema";
-import type { User } from "~/types";
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  avatar: string | null;
+  role: string;
+  point: number;
+}
 
 interface AuthState {
   user: User | null;
   token: string | null;
   isAuthenticated: boolean;
-  isLoading: boolean;
-
-  // Actions
   login: (payload: LoginSchema) => Promise<void>;
   register: (payload: RegisterSchema) => Promise<void>;
   logout: () => void;
   setAuth: (data: { user: User; token: string }) => void;
-  updateProfile: (data: Partial<User>) => void;
-  switchRole: (role: "CUSTOMER" | "ORGANIZER") => void;
 }
 
 export const useAuthStore = create<AuthState>()(
@@ -25,44 +28,34 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       token: null,
       isAuthenticated: false,
-      isLoading: false,
 
       async login(payload) {
-        set({ isLoading: true });
-        try {
-          const data = await authService.login(payload);
+        const data = await authService.login(payload);
 
-          set({
-            // Ensure the data shape matches User type.
-            // In a real app, backend should return the exact shape or we map it here.
-            user: { ...data, id: data.id.toString() } as User,
-            token: data.accessToken,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-          localStorage.setItem("accessToken", data.accessToken);
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
+        // Use setAuth logic or handle manually if needed, but for now match the types
+        set({
+          user: {
+            id: data.id,
+            name: data.name,
+            email: data.email,
+            avatar: data.avatar,
+            role: data.role,
+            point: data.point,
+          },
+          token: data.accessToken, // Assuming API returns accessToken here too if we keep this action
+          isAuthenticated: true,
+        });
+        localStorage.setItem("accessToken", data.accessToken);
       },
 
       async register(payload) {
-        set({ isLoading: true });
-        try {
-          const data = await authService.register(payload);
+        const data = await authService.register(payload);
 
-          set({
-            // Ensure the data shape matches User type.
-            user: { ...data.user, id: data.user.id.toString() } as User,
-            token: data.token,
-            isAuthenticated: true,
-            isLoading: false,
-          });
-        } catch (error) {
-          set({ isLoading: false });
-          throw error;
-        }
+        set({
+          user: data.user,
+          token: data.token,
+          isAuthenticated: true,
+        });
       },
 
       logout() {
@@ -81,18 +74,6 @@ export const useAuthStore = create<AuthState>()(
           token: data.token,
           isAuthenticated: true,
         });
-      },
-
-      updateProfile: (data: Partial<User>) => {
-        set((state) => ({
-          user: state.user ? { ...state.user, ...data } : null,
-        }));
-      },
-
-      switchRole: (role: "CUSTOMER" | "ORGANIZER") => {
-        set((state) => ({
-          user: state.user ? { ...state.user, role } : null,
-        }));
       },
     }),
     {
