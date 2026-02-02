@@ -1,28 +1,30 @@
-import { useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router';
-import { motion } from 'framer-motion';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import { z } from 'zod';
-import { Calendar, Eye, EyeOff, Loader2 } from 'lucide-react';
-import { Button } from '~/components/ui/button';
-import { Input } from '~/components/ui/input';
-import { Label } from '~/components/ui/label';
-import { RadioGroup, RadioGroupItem } from '~/components/ui/radio-group';
-import { useAuthStore } from '~/store/auth-store';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router";
+import { motion } from "framer-motion";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { Calendar, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Button } from "~/components/ui/button";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "~/components/ui/radio-group";
+import { useAuthStore } from "~/store/auth-store";
+import { toast } from "sonner";
 
-const registerSchema = z.object({
-  name: z.string().min(2, 'Name must be at least 2 characters').max(50),
-  email: z.string().email('Please enter a valid email'),
-  password: z.string().min(8, 'Password must be at least 8 characters'),
-  confirmPassword: z.string(),
-  role: z.enum(['customer', 'organizer']),
-  referralCode: z.string().optional(),
-}).refine((data) => data.password === data.confirmPassword, {
-  message: "Passwords don't match",
-  path: ['confirmPassword'],
-});
+const registerSchema = z
+  .object({
+    name: z.string().min(2, "Name must be at least 2 characters").max(50),
+    email: z.string().email("Please enter a valid email"),
+    password: z.string().min(8, "Password must be at least 8 characters"),
+    confirmPassword: z.string(),
+    role: z.enum(["customer", "organizer"]),
+    referralCode: z.string().optional(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  });
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
@@ -32,7 +34,8 @@ export default function RegisterPage() {
   const { register: registerUser, isLoading } = useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
 
-  const defaultRole = searchParams.get('role') === 'organizer' ? 'organizer' : 'customer';
+  const defaultRole =
+    searchParams.get("role") === "organizer" ? "organizer" : "customer";
 
   const {
     register,
@@ -43,16 +46,16 @@ export default function RegisterPage() {
   } = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
-      name: '',
-      email: '',
-      password: '',
-      confirmPassword: '',
+      name: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
       role: defaultRole,
-      referralCode: '',
+      referralCode: "",
     },
   });
 
-  const selectedRole = watch('role');
+  const selectedRole = watch("role");
 
   const onSubmit = async (data: RegisterFormData) => {
     try {
@@ -63,13 +66,13 @@ export default function RegisterPage() {
         role: data.role,
         referralCode: data.referralCode,
       });
-      toast.success('Account created successfully!');
+      toast.success("Account created successfully!");
       if (data.referralCode) {
-        toast.success('You received 10,000 points from the referral!');
+        toast.success("You received 10,000 points from the referral!");
       }
-      navigate('/');
+      navigate("/");
     } catch (error) {
-      toast.error('Registration failed. Please try again.');
+      toast.error("Registration failed. Please try again.");
     }
   };
 
@@ -88,7 +91,8 @@ export default function RegisterPage() {
             Start Your Event Journey
           </h2>
           <p className="text-lg text-primary-foreground/80">
-            Join thousands of event lovers and organizers. Create unforgettable experiences together.
+            Join thousands of event lovers and organizers. Create unforgettable
+            experiences together.
           </p>
         </div>
       </div>
@@ -108,7 +112,9 @@ export default function RegisterPage() {
             <span className="text-2xl font-bold text-foreground">Eventku</span>
           </Link>
 
-          <h1 className="text-3xl font-bold text-foreground mb-2">Create an account</h1>
+          <h1 className="text-3xl font-bold text-foreground mb-2">
+            Create an account
+          </h1>
           <p className="text-muted-foreground mb-8">
             Get started with Eventku today
           </p>
@@ -119,34 +125,48 @@ export default function RegisterPage() {
               <Label className="mb-3 block">I want to</Label>
               <RadioGroup
                 value={selectedRole}
-                onValueChange={(value) => setValue('role', value as 'customer' | 'organizer')}
+                onValueChange={(value) =>
+                  setValue("role", value as "customer" | "organizer")
+                }
                 className="grid grid-cols-2 gap-4"
               >
                 <Label
                   htmlFor="customer"
                   className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                    selectedRole === 'customer'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                    selectedRole === "customer"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <RadioGroupItem value="customer" id="customer" className="sr-only" />
+                  <RadioGroupItem
+                    value="customer"
+                    id="customer"
+                    className="sr-only"
+                  />
                   <span className="text-2xl mb-2">🎫</span>
                   <span className="font-medium">Attend Events</span>
-                  <span className="text-xs text-muted-foreground">Find & book events</span>
+                  <span className="text-xs text-muted-foreground">
+                    Find & book events
+                  </span>
                 </Label>
                 <Label
                   htmlFor="organizer"
                   className={`flex flex-col items-center justify-center p-4 rounded-lg border-2 cursor-pointer transition-colors ${
-                    selectedRole === 'organizer'
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50'
+                    selectedRole === "organizer"
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <RadioGroupItem value="organizer" id="organizer" className="sr-only" />
+                  <RadioGroupItem
+                    value="organizer"
+                    id="organizer"
+                    className="sr-only"
+                  />
                   <span className="text-2xl mb-2">🎪</span>
                   <span className="font-medium">Organize Events</span>
-                  <span className="text-xs text-muted-foreground">Create & manage events</span>
+                  <span className="text-xs text-muted-foreground">
+                    Create & manage events
+                  </span>
                 </Label>
               </RadioGroup>
             </div>
@@ -157,10 +177,12 @@ export default function RegisterPage() {
                 id="name"
                 placeholder="Enter your full name"
                 className="mt-1.5 input-focus"
-                {...register('name')}
+                {...register("name")}
               />
               {errors.name && (
-                <p className="text-sm text-destructive mt-1">{errors.name.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.name.message}
+                </p>
               )}
             </div>
 
@@ -171,10 +193,12 @@ export default function RegisterPage() {
                 type="email"
                 placeholder="Enter your email"
                 className="mt-1.5 input-focus"
-                {...register('email')}
+                {...register("email")}
               />
               {errors.email && (
-                <p className="text-sm text-destructive mt-1">{errors.email.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
@@ -183,10 +207,10 @@ export default function RegisterPage() {
               <div className="relative mt-1.5">
                 <Input
                   id="password"
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   placeholder="Create a password"
                   className="pr-10 input-focus"
-                  {...register('password')}
+                  {...register("password")}
                 />
                 <button
                   type="button"
@@ -201,7 +225,9 @@ export default function RegisterPage() {
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-destructive mt-1">{errors.password.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -212,10 +238,12 @@ export default function RegisterPage() {
                 type="password"
                 placeholder="Confirm your password"
                 className="mt-1.5 input-focus"
-                {...register('confirmPassword')}
+                {...register("confirmPassword")}
               />
               {errors.confirmPassword && (
-                <p className="text-sm text-destructive mt-1">{errors.confirmPassword.message}</p>
+                <p className="text-sm text-destructive mt-1">
+                  {errors.confirmPassword.message}
+                </p>
               )}
             </div>
 
@@ -225,7 +253,7 @@ export default function RegisterPage() {
                 id="referralCode"
                 placeholder="Enter referral code"
                 className="mt-1.5 input-focus"
-                {...register('referralCode')}
+                {...register("referralCode")}
               />
               <p className="text-xs text-muted-foreground mt-1">
                 Get 10,000 points when you sign up with a referral code!
@@ -244,23 +272,30 @@ export default function RegisterPage() {
                   Creating account...
                 </>
               ) : (
-                'Create Account'
+                "Create Account"
               )}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-8">
-            Already have an account?{' '}
-            <Link to="/login" className="text-primary font-medium hover:underline">
+            Already have an account?{" "}
+            <Link
+              to="/login"
+              className="text-primary font-medium hover:underline"
+            >
               Sign in
             </Link>
           </p>
 
           <p className="text-center text-xs text-muted-foreground mt-4">
-            By creating an account, you agree to our{' '}
-            <Link to="/terms" className="text-primary hover:underline">Terms of Service</Link>
-            {' '}and{' '}
-            <Link to="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+            By creating an account, you agree to our{" "}
+            <Link to="/terms" className="text-primary hover:underline">
+              Terms of Service
+            </Link>{" "}
+            and{" "}
+            <Link to="/privacy" className="text-primary hover:underline">
+              Privacy Policy
+            </Link>
           </p>
         </motion.div>
       </div>

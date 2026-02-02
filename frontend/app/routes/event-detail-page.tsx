@@ -1,37 +1,37 @@
-import { useParams, useNavigate, Link } from 'react-router';
-import { motion } from 'framer-motion';
-import { 
-  Calendar, 
-  MapPin, 
-  Clock, 
-  Users, 
-  Share2, 
+import { useParams, useNavigate, Link } from "react-router";
+import { motion } from "framer-motion";
+import {
+  Calendar,
+  MapPin,
+  Clock,
+  Users,
+  Share2,
   Heart,
   ChevronLeft,
   Ticket,
   Tag,
   Star,
-  User
-} from 'lucide-react';
-import { useState } from 'react';
-import { Button } from '~/components/ui/button';
-import { Badge } from '~/components/ui/badge';
-import { Separator } from '~/components/ui/separator';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
+  User,
+} from "lucide-react";
+import { useState } from "react";
+import { Button } from "~/components/ui/button";
+import { Badge } from "~/components/ui/badge";
+import { Separator } from "~/components/ui/separator";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '~/components/ui/select';
-import { RatingStars } from '~/components/shared/rating-stars';
-import { useEventStore } from '~/store/event-store';
-import { useCartStore } from '~/store/cart-store';
-import { useAuthStore } from '~/store/auth-store';
-import { formatCurrency, formatDate, formatTime, TicketType } from '~/types';
-import { mockReviews } from '~/data/mock-data';
-import { toast } from 'sonner';
+} from "~/components/ui/select";
+import { RatingStars } from "~/components/shared/rating-stars";
+import { useEventStore } from "~/store/event-store";
+import { useCartStore } from "~/store/cart-store";
+import { useAuthStore } from "~/store/auth-store";
+import { formatCurrency, formatDate, formatTime, TicketType } from "~/types";
+import { mockReviews } from "~/data/mock-data";
+import { toast } from "sonner";
 
 export default function EventDetailPage() {
   const { eventId } = useParams();
@@ -39,8 +39,8 @@ export default function EventDetailPage() {
   const { isAuthenticated } = useAuthStore();
   const getEventById = useEventStore((state) => state.getEventById);
   const { addItem } = useCartStore();
-  
-  const event = getEventById(eventId || '');
+
+  const event = getEventById(eventId || "");
   const [selectedTicket, setSelectedTicket] = useState<TicketType | null>(null);
   const [quantity, setQuantity] = useState(1);
 
@@ -55,23 +55,23 @@ export default function EventDetailPage() {
     );
   }
 
-  const eventReviews = mockReviews.filter(r => r.eventId === event.id);
+  const eventReviews = mockReviews.filter((r) => r.eventId === event.id);
   const isFree = event.price === 0;
 
   const handleBuyTicket = () => {
     if (!isAuthenticated) {
-      toast.info('Please login to purchase tickets');
-      navigate('/login');
+      toast.info("Please login to purchase tickets");
+      navigate("/login");
       return;
     }
 
     if (!selectedTicket) {
-      toast.error('Please select a ticket type');
+      toast.error("Please select a ticket type");
       return;
     }
 
     addItem(event, selectedTicket, quantity);
-    navigate('/checkout');
+    navigate("/checkout");
   };
 
   return (
@@ -84,7 +84,7 @@ export default function EventDetailPage() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-linear-to-t from-foreground/80 to-transparent" />
-        
+
         {/* Back Button */}
         <Button
           variant="secondary"
@@ -138,9 +138,12 @@ export default function EventDetailPage() {
                     <Calendar className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-medium text-foreground">{formatDate(event.startDate)}</p>
+                    <p className="font-medium text-foreground">
+                      {formatDate(event.startDate)}
+                    </p>
                     <p className="text-sm text-muted-foreground">
-                      {formatTime(event.startDate)} - {formatTime(event.endDate)}
+                      {formatTime(event.startDate)} -{" "}
+                      {formatTime(event.endDate)}
                     </p>
                   </div>
                 </div>
@@ -150,7 +153,9 @@ export default function EventDetailPage() {
                   </div>
                   <div>
                     <p className="font-medium text-foreground">{event.venue}</p>
-                    <p className="text-sm text-muted-foreground">{event.location}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {event.location}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -159,7 +164,9 @@ export default function EventDetailPage() {
 
               {/* Description */}
               <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4">About This Event</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">
+                  About This Event
+                </h2>
                 <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
                   {event.description}
                 </p>
@@ -169,14 +176,23 @@ export default function EventDetailPage() {
 
               {/* Organizer */}
               <div>
-                <h2 className="text-xl font-semibold text-foreground mb-4">Organized By</h2>
+                <h2 className="text-xl font-semibold text-foreground mb-4">
+                  Organized By
+                </h2>
                 <div className="flex items-center gap-4 p-4 rounded-lg bg-muted/50">
                   <Avatar className="h-14 w-14">
-                    <AvatarImage src={event.organizer.avatar} alt={event.organizer.name} />
-                    <AvatarFallback>{event.organizer.name.charAt(0)}</AvatarFallback>
+                    <AvatarImage
+                      src={event.organizer.avatar}
+                      alt={event.organizer.name}
+                    />
+                    <AvatarFallback>
+                      {event.organizer.name.charAt(0)}
+                    </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <p className="font-semibold text-foreground">{event.organizer.name}</p>
+                    <p className="font-semibold text-foreground">
+                      {event.organizer.name}
+                    </p>
                     <div className="flex items-center gap-3 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <Star className="h-4 w-4 fill-warning text-warning" />
@@ -196,7 +212,9 @@ export default function EventDetailPage() {
               {/* Reviews */}
               <div>
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-semibold text-foreground">Reviews</h2>
+                  <h2 className="text-xl font-semibold text-foreground">
+                    Reviews
+                  </h2>
                   {eventReviews.length > 0 && (
                     <div className="flex items-center gap-2">
                       <RatingStars rating={event.organizer.rating} showValue />
@@ -210,16 +228,24 @@ export default function EventDetailPage() {
                 {eventReviews.length > 0 ? (
                   <div className="space-y-4">
                     {eventReviews.map((review) => (
-                      <div key={review.id} className="p-4 rounded-lg bg-muted/50">
+                      <div
+                        key={review.id}
+                        className="p-4 rounded-lg bg-muted/50"
+                      >
                         <div className="flex items-start gap-3 mb-3">
                           <Avatar className="h-10 w-10">
-                            <AvatarImage src={review.user.avatar} alt={review.user.name} />
+                            <AvatarImage
+                              src={review.user.avatar}
+                              alt={review.user.name}
+                            />
                             <AvatarFallback>
                               <User className="h-4 w-4" />
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
-                            <p className="font-medium text-foreground">{review.user.name}</p>
+                            <p className="font-medium text-foreground">
+                              {review.user.name}
+                            </p>
                             <div className="flex items-center gap-2">
                               <RatingStars rating={review.rating} size="sm" />
                               <span className="text-xs text-muted-foreground">
@@ -228,7 +254,9 @@ export default function EventDetailPage() {
                             </div>
                           </div>
                         </div>
-                        <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {review.comment}
+                        </p>
                       </div>
                     ))}
                   </div>
@@ -268,10 +296,15 @@ export default function EventDetailPage() {
                       Voucher Available
                     </div>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Use code <span className="font-mono font-bold">{event.vouchers[0].code}</span> for{' '}
-                      {event.vouchers[0].discountType === 'percentage' 
+                      Use code{" "}
+                      <span className="font-mono font-bold">
+                        {event.vouchers[0].code}
+                      </span>{" "}
+                      for{" "}
+                      {event.vouchers[0].discountType === "percentage"
                         ? `${event.vouchers[0].discountAmount}% off`
-                        : formatCurrency(event.vouchers[0].discountAmount) + ' off'}
+                        : formatCurrency(event.vouchers[0].discountAmount) +
+                          " off"}
                     </p>
                   </div>
                 )}
@@ -285,9 +318,11 @@ export default function EventDetailPage() {
                       Select Ticket
                     </label>
                     <Select
-                      value={selectedTicket?.id || ''}
+                      value={selectedTicket?.id || ""}
                       onValueChange={(value) => {
-                        const ticket = event.ticketTypes.find(t => t.id === value);
+                        const ticket = event.ticketTypes.find(
+                          (t) => t.id === value,
+                        );
                         setSelectedTicket(ticket || null);
                       }}
                     >
@@ -328,7 +363,7 @@ export default function EventDetailPage() {
                       <SelectContent className="bg-popover">
                         {[1, 2, 3, 4, 5].map((num) => (
                           <SelectItem key={num} value={num.toString()}>
-                            {num} {num === 1 ? 'Ticket' : 'Tickets'}
+                            {num} {num === 1 ? "Ticket" : "Tickets"}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -346,14 +381,14 @@ export default function EventDetailPage() {
                     </div>
                   )}
 
-                  <Button 
-                    className="w-full btn-gradient" 
+                  <Button
+                    className="w-full btn-gradient"
                     size="lg"
                     onClick={handleBuyTicket}
                     disabled={event.availableSeats === 0}
                   >
                     <Ticket className="h-5 w-5 mr-2" />
-                    {event.availableSeats === 0 ? 'Sold Out' : 'Get Tickets'}
+                    {event.availableSeats === 0 ? "Sold Out" : "Get Tickets"}
                   </Button>
                 </div>
               </div>

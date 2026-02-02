@@ -1,12 +1,19 @@
-import { Button } from '~/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '~/components/ui/card';
-import { Input } from '~/components/ui/input';
-import { Label } from '~/components/ui/label';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '~/components/ui/tabs';
-import { Avatar, AvatarFallback, AvatarImage } from '~/components/ui/avatar';
-import { Separator } from '~/components/ui/separator';
-import { useAuthStore } from '~/store/auth-store';
-import { Checkbox } from '~/components/ui/checkbox';
+import { Button } from "~/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "~/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "~/components/ui/avatar";
+import { Separator } from "~/components/ui/separator";
+import { useAuthStore } from "~/store/auth-store";
+import { Checkbox } from "~/components/ui/checkbox";
 
 export default function SettingsPage() {
   const { user } = useAuthStore();
@@ -40,7 +47,9 @@ export default function SettingsPage() {
               <div className="flex items-center gap-4">
                 <Avatar className="h-20 w-20">
                   <AvatarImage src={user?.avatar} />
-                  <AvatarFallback>{user?.name?.charAt(0) ?? 'U'}</AvatarFallback>
+                  <AvatarFallback>
+                    {user?.name?.charAt(0) ?? "U"}
+                  </AvatarFallback>
                 </Avatar>
                 <Button variant="outline">Change Avatar</Button>
               </div>
@@ -48,7 +57,11 @@ export default function SettingsPage() {
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" defaultValue={user?.name} placeholder="Enter your name" />
+                  <Input
+                    id="name"
+                    defaultValue={user?.name}
+                    placeholder="Enter your name"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Analysis</Label>
