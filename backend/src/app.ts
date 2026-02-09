@@ -21,9 +21,6 @@ import { MediaController } from "./modules/media/media.controller.js";
 import { MediaRouter } from "./modules/media/media.router.js";
 import { AuthMiddleware } from "./middleware/auth.middleware.js";
 import { ValidationMiddleware } from "./middleware/validation.middleware.js";
-import { UploadMiddleware } from "./middleware/uploader.middleware.js";
-import { CloudinaryService } from "./modules/cloudinary/cloudinary.service.js";
-import { MailService } from "./modules/mail/mail.service.js";
 import { Scheduler } from "./jobs/scheduler.js";
 
 const PORT = 8000;
@@ -40,7 +37,7 @@ export class App {
 
   private configure = () => {
     this.app.use(cors());
-    this.app.use(express.json({ limit: "10mb" }));
+    this.app.use(express.json());
   };
 
   private registerModules = () => {
@@ -48,14 +45,8 @@ export class App {
     const prismaClient = prisma;
 
     // services
-    const cloudinaryService = new CloudinaryService();
-    const mailService = new MailService();
-    const authService = new AuthService(prismaClient, mailService);
-    const userService = new UserService(
-      prismaClient,
-      cloudinaryService,
-      mailService,
-    );
+    const authService = new AuthService(prismaClient);
+    const userService = new UserService(prismaClient);
     const eventService = new EventService(prismaClient);
     const transactionService = new TransactionService(prismaClient);
     const reviewService = new ReviewService(prismaClient);
@@ -70,7 +61,6 @@ export class App {
     // middlewares
     const authMiddleware = new AuthMiddleware();
     const validationMiddleware = new ValidationMiddleware();
-    const uploadMiddleware = new UploadMiddleware();
 
     // routes
     const authRouter = new AuthRouter(authController, validationMiddleware);
@@ -78,13 +68,13 @@ export class App {
     const eventRouter = new EventRouter(eventController, authMiddleware);
     const transactionRouter = new TransactionRouter(
       transactionController,
-      authMiddleware, // Inject authMiddleware
+      authMiddleware // Inject authMiddleware
     );
     const reviewRouter = new ReviewRouter(reviewController, authMiddleware); // Inject authMiddleware
 
     // media
-    const mediaController = new MediaController(cloudinaryService);
-    const mediaRouter = new MediaRouter(mediaController, uploadMiddleware);
+    const mediaController = new MediaController();
+    const mediaRouter = new MediaRouter(mediaController);
 
     // entry point
     this.app.use("/auth", authRouter.getRouter());

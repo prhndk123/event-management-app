@@ -3,8 +3,6 @@ import { AuthController } from "./auth.controller.js";
 import express, { Router } from "express";
 import { RegisterDto } from "./dto/register.dto.js";
 import { LoginDto } from "./dto/login.dto.js";
-import { ForgotPasswordDto } from "./dto/forgot-password.dto.js";
-import { ResetPasswordDto } from "./dto/reset-password.dto.js";
 
 export class AuthRouter {
   private router: Router;
@@ -25,16 +23,6 @@ export class AuthRouter {
       "/login",
       this.validationMiddleware.validateBody(LoginDto),
       this.authController.login,
-    );
-    this.router.post(
-      "/forgot-password",
-      this.validationMiddleware.validateBody(ForgotPasswordDto),
-      this.authController.forgotPassword,
-    );
-    this.router.post(
-      "/reset-password",
-      this.validationMiddleware.validateBody(ResetPasswordDto),
-      this.authController.resetPassword,
     );
   };
   getRouter = () => {

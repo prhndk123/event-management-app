@@ -1,4 +1,5 @@
 import nodemailer from "nodemailer";
+import { ApiError } from "../utils/api-error.js";
 
 const transporter = nodemailer.createTransport({
     service: "gmail",

@@ -1,21 +1,15 @@
-import { Prisma, PrismaClient, User } from "../../generated/prisma/client.js";
+import { Prisma, PrismaClient, User } from "@prisma/client";
 import { PaginationQueryParams } from "../../types/pagination.js";
 import { CreateUserBody } from "../../types/user.js";
 import { ApiError } from "../../utils/api-error.js";
 import { comparePassword, hashPassword } from "../../lib/argon.js";
-import { CloudinaryService } from "../cloudinary/cloudinary.service.js";
-import { MailService } from "../mail/mail.service.js";
 
 interface GetUsersQuery extends PaginationQueryParams {
   search: string;
 }
 
 export class UserService {
-  constructor(
-    private prisma: PrismaClient,
-    private cloudinaryService: CloudinaryService,
-    private mailService: MailService,
-  ) {}
+  constructor(private prisma: PrismaClient) {}
 
   getUsers = async (query: GetUsersQuery) => {
     const { page, sortBy, sortOrder, take, search } = query;
@@ -133,27 +127,6 @@ export class UserService {
       data: { password: hashedNewPassword },
     });
 
-    // Send email notification
-    const now = new Date();
-    await this.mailService.sendEmail(
-      user.email,
-      "Your Password Was Changed - Eventku",
-      "password-changed",
-      {
-        name: user.name,
-        date: now.toLocaleDateString("en-US", {
-          weekday: "long",
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }),
-        time: now.toLocaleTimeString("en-US", {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-      },
-    );
-
     return { message: "Password updated successfully" };
   };
 
@@ -176,21 +149,7 @@ export class UserService {
       });
 
       if (existingUser) {
-        throw new ApiError("Email already taken", 400);
-      }
-    }
-
-    // If phone is being updated, check if it's already taken by another user
-    if (body.phone) {
-      const existingUser = await this.prisma.user.findFirst({
-        where: {
-          phone: body.phone,
-          id: { not: id }, // Exclude current user
-        },
-      });
-
-      if (existingUser) {
-        throw new ApiError("Phone number already taken", 400);
+        throw new ApiError("Email already exist", 400);
       }
     }
 
@@ -206,21 +165,12 @@ export class UserService {
     if (body.phone !== undefined) updateData.phone = body.phone;
     if (body.avatar !== undefined) updateData.avatar = body.avatar;
 
-    // Check if avatar is being updated and remove old one from Cloudinary
-    if (body.avatar && body.avatar !== (await this.getUser(id)).avatar) {
-      const currentUser = await this.getUser(id);
-      if (currentUser.avatar) {
-        await this.cloudinaryService.removeByUrl(currentUser.avatar);
-      }
-    }
-
-    const updatedUser = await this.prisma.user.update({
+    await this.prisma.user.update({
       where: { id },
       data: updateData,
-      omit: { password: true },
     });
 
-    return { ...updatedUser, message: "Profile updated successfully" };
+    return { message: "Profile updated successfully" };
   };
 
   deleteUser = async (id: number) => {
