@@ -35,6 +35,20 @@ export class UserController {
     res.status(200).send(result);
   };
 
+  updatePassword = async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const body = req.body;
+    const result = await this.userService.updatePassword(id, body);
+    res.status(200).send(result);
+  };
+
+  updateProfile = async (req: Request, res: Response) => {
+    const id = Number(req.params.id);
+    const body = req.body;
+    const result = await this.userService.updateProfile(id, body);
+    res.status(200).send(result);
+  };
+
   deleteUser = async (req: Request, res: Response) => {
     const id = Number(req.params.id);
     const result = await this.userService.deleteUser(id);

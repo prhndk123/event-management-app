@@ -1,33 +1,68 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client.js";
 import { ApiError } from "../../utils/api-error.js";
-import { CreateTransactionBody, UploadPaymentProofBody } from "../../types/transaction.js";
+import {
+  CreateTransactionBody,
+  UploadPaymentProofBody,
+} from "../../types/transaction.js";
+import { sendEmail } from "../../lib/mail.js";
 
 export class TransactionService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
 
-  createTransaction = async (userId: number, eventId: number, body: CreateTransactionBody) => {
-    const { ticketTypeId, quantity, voucherCode, couponCode, pointsToUse = 0 } = body;
+  createTransaction = async (
+    userId: number,
+    eventId: number,
+    body: CreateTransactionBody,
+  ) => {
+    const {
+      ticketTypeId,
+      quantity,
+      voucherCode,
+      couponCode,
+      pointsToUse = 0,
+    } = body;
 
     // Validate quantity
     if (quantity <= 0) {
       throw new ApiError("Quantity must be greater than 0", 400);
     }
 
+    // Validate points to use
+    if (pointsToUse < 0) {
+      throw new ApiError("Points to use cannot be negative", 400);
+    }
+
     // Use SQL transaction for atomicity
     const transaction = await this.prisma.$transaction(async (tx) => {
-      // 1. Lock ticket type and check availability
-      const ticketType = await tx.ticketType.findUnique({
-        where: { id: ticketTypeId },
-        include: {
-          event: true,
-        },
-      });
+      // 1. Lock ticket type and check availability using Raw SQL for Locking
+      // Prisma doesn't support "FOR UPDATE" natively yet
+      console.log(`[DEBUG] Locking ticketType ${ticketTypeId}`);
+      const ticketTypes = await tx.$queryRaw<any[]>`
+        SELECT * FROM "ticket_types"
+        WHERE id = ${ticketTypeId}
+        FOR UPDATE
+      `;
+      console.log(`[DEBUG] Locked. Found ${ticketTypes.length} rows`);
 
-      if (!ticketType) {
+      if (!ticketTypes.length) {
         throw new ApiError("Ticket type not found", 404);
       }
 
-      if (ticketType.eventId !== eventId) {
+      const ticketType: any = ticketTypes[0];
+
+      // Need to fetch event relation separately or assume consistency
+      // Since we need eventId validation, let's fetch event with standard query
+      // The TicketType is already locked so this read is safe from race conditions on TicketType
+      const ticketTypeRelation = await tx.ticketType.findUnique({
+        where: { id: ticketTypeId },
+        include: { event: true },
+      });
+
+      if (!ticketTypeRelation) { // Should not happen given above check
+        throw new ApiError("Ticket type not found", 404);
+      }
+
+      if (ticketTypeRelation.eventId !== eventId) {
         throw new ApiError("Ticket type does not belong to this event", 400);
       }
 
@@ -61,7 +96,9 @@ export class TransactionService {
 
         voucherId = voucher.id;
         if (voucher.discountType === "PERCENTAGE") {
-          voucherDiscount = Math.floor(subtotal * (voucher.discountAmount / 100));
+          voucherDiscount = Math.floor(
+            subtotal * (voucher.discountAmount / 100),
+          );
         } else {
           voucherDiscount = Math.min(voucher.discountAmount, subtotal);
         }
@@ -85,7 +122,10 @@ export class TransactionService {
         }
 
         couponId = coupon.id;
-        couponDiscount = Math.min(coupon.discountAmount, subtotal - voucherDiscount);
+        couponDiscount = Math.min(
+          coupon.discountAmount,
+          subtotal - voucherDiscount,
+        );
       }
 
       // 5. Check and apply points
@@ -98,10 +138,17 @@ export class TransactionService {
       }
 
       const availablePoints = user.point || 0;
-      const pointsToDeduct = Math.min(pointsToUse, availablePoints, subtotal - voucherDiscount - couponDiscount);
+      const pointsToDeduct = Math.min(
+        pointsToUse,
+        availablePoints,
+        subtotal - voucherDiscount - couponDiscount,
+      );
 
       // 6. Calculate final price
-      const finalPrice = Math.max(0, subtotal - voucherDiscount - couponDiscount - pointsToDeduct);
+      const finalPrice = Math.max(
+        0,
+        subtotal - voucherDiscount - couponDiscount - pointsToDeduct,
+      );
 
       // 7. Update available seats
       await tx.ticketType.update({
@@ -146,15 +193,15 @@ export class TransactionService {
           data: {
             userId,
             amount: -pointsToDeduct,
-            description: `Used for transaction on event: ${ticketType.event.title}`,
+            description: `Used for transaction on event: ${ticketTypeRelation.event.title}`,
             type: "USED",
           },
         });
       }
 
       // 11. Create transaction
-      const expiresAt = new Date();
-      expiresAt.setHours(expiresAt.getHours() + 2); // 2 hours from now
+      const expiredAt = new Date();
+      expiredAt.setHours(expiredAt.getHours() + 2); // 2 hours from now
 
       const newTransaction = await tx.transaction.create({
         data: {
@@ -198,7 +245,11 @@ export class TransactionService {
     return transaction;
   };
 
-  uploadPaymentProof = async (transactionId: number, userId: number, body: UploadPaymentProofBody) => {
+  uploadPaymentProof = async (
+    transactionId: number,
+    userId: number,
+    body: UploadPaymentProofBody,
+  ) => {
     const transaction = await this.prisma.transaction.findUnique({
       where: { id: transactionId },
     });
@@ -208,7 +259,10 @@ export class TransactionService {
     }
 
     if (transaction.userId !== userId) {
-      throw new ApiError("You don't have permission to update this transaction", 403);
+      throw new ApiError(
+        "You don't have permission to update this transaction",
+        403,
+      );
     }
 
     if (transaction.status !== "WAITING_PAYMENT") {
@@ -222,17 +276,16 @@ export class TransactionService {
       throw new ApiError("Payment deadline has expired", 400);
     }
 
-    // Set decision deadline (3 days from now)
-    const decisionDeadline = new Date();
-    decisionDeadline.setDate(decisionDeadline.getDate() + 3);
-
     const updatedTransaction = await this.prisma.transaction.update({
       where: { id: transactionId },
       data: {
         paymentProof: body.paymentProof,
         status: "WAITING_CONFIRMATION",
-        // Store decision deadline in updatedAt for now, or add a new field
-        updatedAt: decisionDeadline,
+        // We do NOT manually set updatedAt here. 
+        // Prisma @updatedAt will automatically set it to NOW.
+        // The detailed rule says: "If organizer doesn't accept/reject within 3 days".
+        // The job checks: updatedAt < NOW - 3 Days.
+        // So resetting updatedAt to NOW is exactly what we want to start the 3-day timer.
       },
       include: {
         event: {
@@ -280,11 +333,17 @@ export class TransactionService {
     }
 
     if (transaction.event.organizerId !== organizer.id) {
-      throw new ApiError("You don't have permission to confirm this transaction", 403);
+      throw new ApiError(
+        "You don't have permission to confirm this transaction",
+        403,
+      );
     }
 
     if (transaction.status !== "WAITING_CONFIRMATION") {
-      throw new ApiError("Transaction is not in waiting confirmation status", 400);
+      throw new ApiError(
+        "Transaction is not in waiting confirmation status",
+        400,
+      );
     }
 
     const updatedTransaction = await this.prisma.transaction.update({
@@ -322,8 +381,19 @@ export class TransactionService {
       },
     });
 
-    // TODO: Send email notification to customer
-    // await sendEmailNotification(updatedTransaction.user.email, "TRANSACTION_ACCEPTED", updatedTransaction);
+    // Send email notification to customer
+    await sendEmail({
+      to: updatedTransaction.user.email,
+      subject: "Transaction Confirmed - Event Ticket",
+      html: `
+        <h1>Transaction Confirmed</h1>
+        <p>Dear ${updatedTransaction.user.name},</p>
+        <p>Your transaction for event <strong>${updatedTransaction.event.title}</strong> has been confirmed.</p>
+        <p>Ticket Type: ${updatedTransaction.ticketType.name}</p>
+        <p>Quantity: ${updatedTransaction.ticketQty}</p>
+        <p>Have a great time!</p>
+      `,
+    });
 
     return updatedTransaction;
   };
@@ -349,11 +419,17 @@ export class TransactionService {
     }
 
     if (transaction.event.organizerId !== organizer.id) {
-      throw new ApiError("You don't have permission to reject this transaction", 403);
+      throw new ApiError(
+        "You don't have permission to reject this transaction",
+        403,
+      );
     }
 
     if (transaction.status !== "WAITING_CONFIRMATION") {
-      throw new ApiError("Transaction is not in waiting confirmation status", 400);
+      throw new ApiError(
+        "Transaction is not in waiting confirmation status",
+        400,
+      );
     }
 
     // Rollback in transaction
@@ -394,8 +470,105 @@ export class TransactionService {
       },
     });
 
-    // TODO: Send email notification to customer
-    // await sendEmailNotification(updatedTransaction.user.email, "TRANSACTION_REJECTED", updatedTransaction);
+    // Send email notification to customer
+    await sendEmail({
+      to: updatedTransaction.user.email,
+      subject: "Transaction Rejected - Event Ticket",
+      html: `
+        <h1>Transaction Rejected</h1>
+        <p>Dear ${updatedTransaction.user.name},</p>
+        <p>Your transaction for event <strong>${updatedTransaction.event.title}</strong> has been rejected by the organizer.</p>
+        <p>If you have used any points or vouchers, they have been restored to your account.</p>
+      `,
+    });
+
+    return updatedTransaction;
+  };
+
+  cancelTransaction = async (transactionId: number, userId: number) => {
+    const transaction = await this.prisma.transaction.findUnique({
+      where: { id: transactionId },
+    });
+
+    if (!transaction) {
+      throw new ApiError("Transaction not found", 404);
+    }
+
+    if (transaction.userId !== userId) {
+      throw new ApiError(
+        "You don't have permission to cancel this transaction",
+        403,
+      );
+    }
+
+    if (
+      !["WAITING_PAYMENT", "WAITING_CONFIRMATION"].includes(transaction.status)
+    ) {
+      throw new ApiError("Transaction cannot be cancelled at this stage", 400);
+    }
+
+    // Rollback in transaction
+    await this.rollbackTransaction(transactionId);
+
+    const updatedTransaction = await this.prisma.transaction.update({
+      where: { id: transactionId },
+      data: {
+        status: "CANCELLED",
+      },
+      include: {
+        event: {
+          include: {
+            organizer: {
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    avatar: true,
+                    email: true,
+                  },
+                },
+              },
+            },
+          },
+        },
+        ticketType: true,
+        voucher: true,
+        coupon: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    // Send email notification to organizer
+    // Note: The organizer user email is deeply nested in the include hierarchy
+    const organizerEmail = updatedTransaction.event.organizer.user.email;
+
+    // Only send email if cancelled by user (which is this endpoint logic)
+    // If auto-cancelled by job, it might call this or similar logic.
+    // For now assuming this endpoint is called by user manually cancelling before confirmation (if allowed) or system.
+    // In this specific method 'cancelTransaction', it checks if transaction.userId === userId, so it's the customer cancelling.
+    // So we notify the organizer.
+
+    // But wait, the standard flow says "Organizer doesn't accept/reject within 3 days -> Auto Cancel".
+    // This endpoint allows USER to cancel? Checking logic...
+    // Yes: "transaction.userId !== userId -> throw 403". So this is CUSTOMER cancelling.
+
+    await sendEmail({
+      to: organizerEmail || "", // Should be available
+      subject: "Transaction Cancelled by User",
+      html: `
+        <h1>Transaction Cancelled</h1>
+        <p>A transaction for your event <strong>${updatedTransaction.event.title}</strong> has been cancelled by the user.</p>
+        <p>Transaction ID: ${updatedTransaction.id}</p>
+      `,
+    });
 
     return updatedTransaction;
   };
@@ -463,8 +636,14 @@ export class TransactionService {
       where: { userId },
     });
 
-    if (transaction.userId !== userId && (!organizer || transaction.event.organizerId !== organizer.id)) {
-      throw new ApiError("You don't have permission to view this transaction", 403);
+    if (
+      transaction.userId !== userId &&
+      (!organizer || transaction.event.organizerId !== organizer.id)
+    ) {
+      throw new ApiError(
+        "You don't have permission to view this transaction",
+        403,
+      );
     }
 
     return transaction;

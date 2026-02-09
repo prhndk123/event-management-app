@@ -1,16 +1,24 @@
 import express, { Router } from "express";
 import { ReviewController } from "./review.controller.js";
-import { authenticate } from "../../middleware/auth.middleware.js";
+import { AuthMiddleware } from "../../middleware/auth.middleware.js";
 
 export class ReviewRouter {
   private router: Router;
 
-  constructor(private reviewController: ReviewController) {
+  constructor(
+    private reviewController: ReviewController,
+    private authMiddleware: AuthMiddleware
+  ) {
     this.router = express.Router();
     this.initRoutes();
   }
 
   private initRoutes = () => {
+    // Middleware shorthand
+    const authenticate = this.authMiddleware.verifyToken(
+      process.env.JWT_SECRET || "secret"
+    );
+
     // Public routes
     this.router.get(
       "/events/:eventId/reviews",

@@ -48,4 +48,14 @@ export class EventController {
     const result = await this.eventService.createVoucher(eventId, req.user.id, req.body);
     res.status(201).send(result);
   };
+
+  publishEvent = async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+
+    const eventId = Number(req.params.id);
+    const result = await this.eventService.publishEvent(eventId, req.user.id);
+    res.status(200).send(result);
+  };
 }

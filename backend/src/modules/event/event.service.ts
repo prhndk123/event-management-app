@@ -1,12 +1,27 @@
-import { PrismaClient, Prisma } from "@prisma/client";
+import { PrismaClient, Prisma } from "../../generated/prisma/client.js";
 import { ApiError } from "../../utils/api-error.js";
-import { CreateEventBody, GetEventsQuery, CreateVoucherBody } from "../../types/event.js";
+import {
+  CreateEventBody,
+  GetEventsQuery,
+  CreateVoucherBody,
+} from "../../types/event.js";
 
 export class EventService {
   constructor(private prisma: PrismaClient) {}
 
   getEvents = async (query: GetEventsQuery) => {
-    const { page, take, sortBy, sortOrder, search, category, location, priceRange, startDate, endDate } = query;
+    const {
+      page,
+      take,
+      sortBy,
+      sortOrder,
+      search,
+      category,
+      location,
+      priceRange,
+      startDate,
+      endDate,
+    } = query;
 
     const whereClause: Prisma.EventWhereInput = {
       status: "PUBLISHED",
@@ -74,7 +89,6 @@ export class EventService {
           where: {
             startDate: { lte: new Date() },
             endDate: { gte: new Date() },
-            usedCount: { lt: Prisma.sql`usage_limit` },
           },
         },
         _count: {
@@ -109,7 +123,7 @@ export class EventService {
             totalReviews: reviews.length,
           },
         };
-      })
+      }),
     );
 
     const total = await this.prisma.event.count({ where: whereClause });
@@ -140,7 +154,6 @@ export class EventService {
           where: {
             startDate: { lte: new Date() },
             endDate: { gte: new Date() },
-            usedCount: { lt: Prisma.sql`usage_limit` },
           },
         },
       },
@@ -236,7 +249,11 @@ export class EventService {
     return event;
   };
 
-  createVoucher = async (eventId: number, organizerId: number, body: CreateVoucherBody) => {
+  createVoucher = async (
+    eventId: number,
+    organizerId: number,
+    body: CreateVoucherBody,
+  ) => {
     // Verify event belongs to organizer
     const organizer = await this.prisma.organizer.findUnique({
       where: { userId: organizerId },
@@ -255,7 +272,10 @@ export class EventService {
     }
 
     if (event.organizerId !== organizer.id) {
-      throw new ApiError("You don't have permission to create voucher for this event", 403);
+      throw new ApiError(
+        "You don't have permission to create voucher for this event",
+        403,
+      );
     }
 
     // Validate dates
@@ -293,5 +313,55 @@ export class EventService {
     });
 
     return voucher;
+  };
+
+  publishEvent = async (eventId: number, organizerId: number) => {
+    // Find organizer
+    const organizer = await this.prisma.organizer.findUnique({
+      where: { userId: organizerId },
+    });
+
+    if (!organizer) {
+      throw new ApiError("Organizer not found", 404);
+    }
+
+    // Find event and verify ownership
+    const event = await this.prisma.event.findUnique({
+      where: { id: eventId },
+    });
+
+    if (!event) {
+      throw new ApiError("Event not found", 404);
+    }
+
+    if (event.organizerId !== organizer.id) {
+      throw new ApiError("Unauthorized to publish this event", 403);
+    }
+
+    if (event.status !== "DRAFT") {
+      throw new ApiError("Only draft events can be published", 400);
+    }
+
+    // Update status to PUBLISHED
+    const updatedEvent = await this.prisma.event.update({
+      where: { id: eventId },
+      data: { status: "PUBLISHED" },
+      include: {
+        ticketTypes: true,
+        organizer: {
+          include: {
+            user: true,
+          },
+        },
+        vouchers: {
+          where: {
+            startDate: { lte: new Date() },
+            endDate: { gte: new Date() },
+          },
+        },
+      },
+    });
+
+    return updatedEvent;
   };
 }

@@ -1,16 +1,25 @@
 import express, { Router } from "express";
 import { TransactionController } from "./transaction.controller.js";
-import { authenticate, authorize } from "../../middleware/auth.middleware.js";
+import { AuthMiddleware } from "../../middleware/auth.middleware.js";
 
 export class TransactionRouter {
   private router: Router;
 
-  constructor(private transactionController: TransactionController) {
+  constructor(
+    private transactionController: TransactionController,
+    private authMiddleware: AuthMiddleware
+  ) {
     this.router = express.Router();
     this.initRoutes();
   }
 
   private initRoutes = () => {
+    // Middleware shorthand
+    const authenticate = this.authMiddleware.verifyToken(
+      process.env.JWT_SECRET || "secret"
+    );
+    const authorize = this.authMiddleware.verifyRole;
+
     // Customer routes
     this.router.post(
       "/events/:eventId/transactions",
@@ -32,18 +41,23 @@ export class TransactionRouter {
       authenticate,
       this.transactionController.uploadPaymentProof
     );
+    this.router.put(
+      "/transactions/:id/cancel",
+      authenticate,
+      this.transactionController.cancelTransaction
+    );
 
     // Organizer routes
     this.router.put(
       "/transactions/:id/confirm",
       authenticate,
-      authorize("ORGANIZER"),
+      authorize(["ORGANIZER"]),
       this.transactionController.confirmTransaction
     );
     this.router.put(
       "/transactions/:id/reject",
       authenticate,
-      authorize("ORGANIZER"),
+      authorize(["ORGANIZER"]),
       this.transactionController.rejectTransaction
     );
   };

@@ -59,6 +59,19 @@ export class TransactionController {
     res.status(200).send(result);
   };
 
+  cancelTransaction = async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+
+    const transactionId = Number(req.params.id);
+    const result = await this.transactionService.cancelTransaction(
+      transactionId,
+      req.user.id
+    );
+    res.status(200).send(result);
+  };
+
   getMyTransactions = async (req: AuthRequest, res: Response) => {
     if (!req.user) {
       return res.status(401).send({ message: "Unauthorized" });

@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -13,11 +14,13 @@ model User {
   password     String
   avatar       String?
   role         Role      @default(CUSTOMER)
-  referralCode String?
+  referralCode String?   @unique
   point        Int?      @default(0)
+  phone        String?
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  refreshToken RefreshToken?
 
   // Relations
   organizer        Organizer?
@@ -26,42 +29,68 @@ model User {
   coupons          Coupon[]
   points           Point[]
   referredByUserId Int?
-  referredBy       User?      @relation("Referral", fields: [referredByUserId], references: [id])
-  referrals        User[]     @relation("Referral")
+  referredBy       User?           @relation("Referral", fields: [referredByUserId], references: [id])
+  referrals        User[]          @relation("Referral")
   wishlists        Wishlist[]
   notifications    Notification[]
   waitlists        Waitlist[]
   attendees        Attendee[]
+  passwordResets   PasswordReset[]
 
   @@map("users")
 }
 
+model PasswordReset {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String
+  expiredAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("refresh_tokens")
+}
+
 model Organizer {
-  id          Int      @id @default(autoincrement())
-  userId      Int      @unique
-  name        String
-  avatar      String?
-  bio         String?
-  rating      Float    @default(0)
-  totalEvents Int      @default(0)
-  totalReviews Int     @default(0)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           Int      @id @default(autoincrement())
+  userId       Int      @unique
+  name         String
+  avatar       String?
+  bio          String?
+  rating       Float    @default(0)
+  totalEvents  Int      @default(0)
+  totalReviews Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
-  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  events   Event[]
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events Event[]
 
   @@map("organizers")
 }
 
 model Event {
-  id          Int      @id @default(autoincrement())
+  id          Int         @id @default(autoincrement())
   organizerId Int
   venueId     Int?
   categoryId  Int?
   title       String
-  description String   @db.Text
+  description String      @db.Text
   image       String?
   category    String
   location    String
@@ -69,13 +98,13 @@ model Event {
   startDate   DateTime
   endDate     DateTime
   status      EventStatus @default(DRAFT)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
 
   // Relations
-  organizer    Organizer    @relation(fields: [organizerId], references: [id], onDelete: Cascade)
-  venueRel     Venue?       @relation(fields: [venueId], references: [id])
-  categoryRel  Category?    @relation(fields: [categoryId], references: [id])
+  organizer    Organizer     @relation(fields: [organizerId], references: [id], onDelete: Cascade)
+  venueRel     Venue?        @relation(fields: [venueId], references: [id])
+  categoryRel  Category?     @relation(fields: [categoryId], references: [id])
   images       EventImage[]
   tags         EventTag[]
   wishlists    Wishlist[]
@@ -90,14 +119,14 @@ model Event {
 }
 
 model TicketType {
-  id           Int    @id @default(autoincrement())
-  eventId      Int
-  name         String
-  description  String @db.Text
-  price        Int    @default(0)
-  totalSeat    Int
+  id            Int    @id @default(autoincrement())
+  eventId       Int
+  name          String
+  description   String @db.Text
+  price         Int    @default(0)
+  totalSeat     Int
   availableSeat Int
-  sold         Int    @default(0)
+  sold          Int    @default(0)
 
   // Relations
   event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -109,15 +138,15 @@ model TicketType {
 }
 
 model Voucher {
-  id            Int      @id @default(autoincrement())
-  eventId       Int
-  code          String
+  id             Int          @id @default(autoincrement())
+  eventId        Int
+  code           String
   discountAmount Int
-  discountType  DiscountType
-  startDate     DateTime
-  endDate       DateTime
-  usageLimit    Int
-  usedCount     Int      @default(0)
+  discountType   DiscountType
+  startDate      DateTime
+  endDate        DateTime
+  usageLimit     Int
+  usedCount      Int          @default(0)
 
   // Relations
   event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -128,61 +157,61 @@ model Voucher {
 }
 
 model Coupon {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  code          String   @unique
+  id             Int      @id @default(autoincrement())
+  userId         Int
+  code           String   @unique
   discountAmount Int
-  expiredAt     DateTime
-  isUsed        Boolean  @default(false)
+  expiredAt      DateTime
+  isUsed         Boolean  @default(false)
 
   // Relations
-  user          User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  transactions  Transaction[]
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transactions Transaction[]
 
   @@map("coupons")
 }
 
 model Point {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   userId      Int
   amount      Int
   description String
   expiredAt   DateTime?
   type        PointType
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("points")
 }
 
 model Transaction {
-  id              Int      @id @default(autoincrement())
-  userId          Int
-  eventId         Int
-  ticketTypeId    Int
-  voucherId       Int?
-  couponId        Int?
-  ticketQty        Int
-  totalPrice      Int
-  pointsUsed      Int      @default(0)
-  finalPrice      Int
-  status          TransactionStatus @default(WAITING_PAYMENT)
-  paymentProof    String?
-  expiredAt       DateTime
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id           Int               @id @default(autoincrement())
+  userId       Int
+  eventId      Int
+  ticketTypeId Int
+  voucherId    Int?
+  couponId     Int?
+  ticketQty    Int
+  totalPrice   Int
+  pointsUsed   Int               @default(0)
+  finalPrice   Int
+  status       TransactionStatus @default(WAITING_PAYMENT)
+  paymentProof String?
+  expiredAt    DateTime
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  ticketType  TicketType   @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
-  voucher     Voucher?     @relation(fields: [voucherId], references: [id], onDelete: SetNull)
-  coupon      Coupon?      @relation(fields: [couponId], references: [id], onDelete: SetNull)
-  review      Review?
-  payment     Payment?
-  attendees   Attendee[]
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  ticketType TicketType @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
+  voucher    Voucher?   @relation(fields: [voucherId], references: [id], onDelete: SetNull)
+  coupon     Coupon?    @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  review     Review?
+  payment    Payment?
+  attendees  Attendee[]
 
   @@map("transactions")
 }
@@ -197,15 +226,15 @@ model Review {
   createdAt     DateTime @default(now())
 
   // Relations
-  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event       Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  transaction Transaction  @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event       Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
 
   @@map("reviews")
 }
 
 model Venue {
-  id          Int     @id @default(autoincrement())
+  id          Int      @id @default(autoincrement())
   name        String
   address     String
   city        String
@@ -219,73 +248,73 @@ model Venue {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  events      Event[]
+  events Event[]
 
   @@map("venues")
 }
 
 model Category {
-  id          Int     @id @default(autoincrement())
-  name        String  @unique
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
   description String?
   createdAt   DateTime @default(now())
 
   // Relations
-  events      Event[]
+  events Event[]
 
   @@map("categories")
 }
 
 model Payment {
-  id              Int      @id @default(autoincrement())
-  transactionId   Int      @unique
-  amount          Int
-  paymentMethod   String   // 'credit_card', 'bank_transfer', 'ewallet'
-  paymentGateway  String?  // 'stripe', 'paypal', etc.
-  gatewayTxnId    String?  @unique
-  status          PaymentStatus @default(PENDING)
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  id             Int           @id @default(autoincrement())
+  transactionId  Int           @unique
+  amount         Int
+  paymentMethod  String // 'credit_card', 'bank_transfer', 'ewallet'
+  paymentGateway String? // 'stripe', 'paypal', etc.
+  gatewayTxnId   String?       @unique
+  status         PaymentStatus @default(PENDING)
+  paidAt         DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
   // Relations
-  transaction     Transaction @relation(fields: [transactionId], references: [id])
+  transaction Transaction @relation(fields: [transactionId], references: [id])
 
   @@map("payments")
 }
 
 model Attendee {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   transactionId Int
   userId        Int
   eventId       Int
   ticketTypeId  Int
-  checkedIn     Boolean  @default(false)
+  checkedIn     Boolean   @default(false)
   checkedInAt   DateTime?
   checkedOutAt  DateTime?
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
 
   // Relations
-  transaction   Transaction @relation(fields: [transactionId], references: [id])
-  user          User        @relation(fields: [userId], references: [id])
-  event         Event       @relation(fields: [eventId], references: [id])
-  ticketType    TicketType  @relation(fields: [ticketTypeId], references: [id])
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+  event       Event       @relation(fields: [eventId], references: [id])
+  ticketType  TicketType  @relation(fields: [ticketTypeId], references: [id])
 
   @@unique([transactionId, userId])
   @@map("attendees")
 }
 
 model EventImage {
-  id       Int     @id @default(autoincrement())
-  eventId  Int
-  url      String
-  altText  String?
-  isMain   Boolean @default(false)
-  order    Int     @default(0)
+  id        Int      @id @default(autoincrement())
+  eventId   Int
+  url       String
+  altText   String?
+  isMain    Boolean  @default(false)
+  order     Int      @default(0)
   createdAt DateTime @default(now())
 
   // Relations
-  event    Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@map("event_images")
 }
@@ -305,8 +334,8 @@ model EventTag {
   tagId   Int
 
   // Relations
-  event   Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  tag     Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  tag   Tag   @relation(fields: [tagId], references: [id], onDelete: Cascade)
 
   @@id([eventId, tagId])
   @@map("event_tags")
@@ -319,41 +348,41 @@ model Wishlist {
   addedAt DateTime @default(now())
 
   // Relations
-  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event   Event   @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
   @@map("wishlists")
 }
 
 model Notification {
-  id        Int      @id @default(autoincrement())
+  id        Int              @id @default(autoincrement())
   userId    Int
   title     String
   message   String
   type      NotificationType
-  isRead    Boolean  @default(false)
+  isRead    Boolean          @default(false)
   readAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime         @default(now())
 
   // Relations
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("notifications")
 }
 
 model Waitlist {
-  id         Int      @id @default(autoincrement())
-  userId     Int
-  eventId    Int
+  id           Int      @id @default(autoincrement())
+  userId       Int
+  eventId      Int
   ticketTypeId Int?
-  position   Int
-  notified   Boolean  @default(false)
-  createdAt  DateTime @default(now())
+  position     Int
+  notified     Boolean  @default(false)
+  createdAt    DateTime @default(now())
 
   // Relations
-  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event      Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      Event       @relation(fields: [eventId], references: [id], onDelete: Cascade)
   ticketType TicketType? @relation(fields: [ticketTypeId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId, ticketTypeId])

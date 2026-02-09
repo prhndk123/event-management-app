@@ -1,57 +1,45 @@
-import { Request, Response, NextFunction } from "express";
-import jwt from "jsonwebtoken";
+import { NextFunction, Request, Response } from "express";
 import { ApiError } from "../utils/api-error.js";
-
-interface JwtPayload {
-  id: number;
-  role: string;
-}
+import jwt from "jsonwebtoken";
+import { Role } from "../generated/prisma/enums.js";
 
 export interface AuthRequest extends Request {
   user?: {
     id: number;
-    role: string;
+    name: string;
+    email: string;
+    role: Role;
   };
 }
 
-export const authenticate = (
-  req: AuthRequest,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new ApiError("Unauthorized", 401);
-    }
-
-    const token = authHeader.substring(7);
-    const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
-
-    req.user = {
-      id: decoded.id,
-      role: decoded.role,
+export class AuthMiddleware {
+  verifyToken = (secretKey: string) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const token = req.headers.authorization?.split(" ")[1];
+      if (!token) {
+        throw new ApiError("Token Not Found", 401);
+      }
+      jwt.verify(token, secretKey, (err, payload) => {
+        if (err) {
+          if (err instanceof jwt.JsonWebTokenError) {
+            throw new ApiError("Token Expired", 401);
+          } else {
+            throw new ApiError("Token Invalid", 401);
+          }
+        }
+        (req as AuthRequest).user = payload as any;
+        res.locals.user = payload;
+        next();
+      });
     };
-
-    next();
-  } catch (error) {
-    if (error instanceof ApiError) {
-      throw error;
-    }
-    throw new ApiError("Invalid token", 401);
-  }
-};
-
-export const authorize = (...roles: string[]) => {
-  return (req: AuthRequest, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      throw new ApiError("Unauthorized", 401);
-    }
-
-    if (!roles.includes(req.user.role)) {
-      throw new ApiError("Forbidden", 403);
-    }
-
-    next();
   };
-};
+  verifyRole = (roles: Role[]) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+      const userRole = res.locals.user.role;
+      if (!userRole || !roles.includes(userRole)) {
+        throw new ApiError("Unauthorized", 403);
+      }
+      next();
+    };
+  };
+}
