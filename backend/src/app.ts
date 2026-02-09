@@ -21,6 +21,9 @@ import { MediaController } from "./modules/media/media.controller.js";
 import { MediaRouter } from "./modules/media/media.router.js";
 import { AuthMiddleware } from "./middleware/auth.middleware.js";
 import { ValidationMiddleware } from "./middleware/validation.middleware.js";
+
+import { CloudinaryService } from "./modules/cloudinary/cloudinary.service.js";
+import { MailService } from "./modules/mail/mail.service.js";
 import { Scheduler } from "./jobs/scheduler.js";
 
 const PORT = 8000;
@@ -37,7 +40,7 @@ export class App {
 
   private configure = () => {
     this.app.use(cors());
-    this.app.use(express.json());
+    this.app.use(express.json({ limit: "10mb" }));
   };
 
   private registerModules = () => {
@@ -45,8 +48,14 @@ export class App {
     const prismaClient = prisma;
 
     // services
-    const authService = new AuthService(prismaClient);
-    const userService = new UserService(prismaClient);
+    const cloudinaryService = new CloudinaryService();
+    const mailService = new MailService();
+    const authService = new AuthService(prismaClient, mailService);
+    const userService = new UserService(
+      prismaClient,
+      cloudinaryService,
+      mailService,
+    );
     const eventService = new EventService(prismaClient);
     const transactionService = new TransactionService(prismaClient);
     const reviewService = new ReviewService(prismaClient);
@@ -61,6 +70,7 @@ export class App {
     // middlewares
     const authMiddleware = new AuthMiddleware();
     const validationMiddleware = new ValidationMiddleware();
+
 
     // routes
     const authRouter = new AuthRouter(authController, validationMiddleware);

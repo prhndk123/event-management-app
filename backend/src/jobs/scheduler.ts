@@ -1,6 +1,6 @@
 import * as cron from "node-cron";
 import { TransactionJobs } from "./transaction-jobs.js";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 
 /**
  * Scheduler for running periodic jobs

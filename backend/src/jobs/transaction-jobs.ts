@@ -1,9 +1,9 @@
 import { TransactionService } from "../modules/transaction/transaction.service.js";
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../generated/prisma/client.js";
 
 /**
  * Cron job functions for auto-expiring and auto-cancelling transactions
- * 
+ *
  * Usage:
  * - Set up a cron job (e.g., using node-cron) to call these functions periodically
  * - Example: Run expireTransactions() every 5 minutes

@@ -1,18 +1,20 @@
-import { PrismaClient, User } from "@prisma/client";
+import { PrismaClient, User } from "../../generated/prisma/client.js";
 import { comparePassword, hashPassword } from "../../lib/argon.js";
 import { ApiError } from "../../utils/api-error.js";
 import jwt from "jsonwebtoken";
+import crypto from "crypto";
 import { CreateUserBody } from "../../types/user.js";
+import { MailService } from "../mail/mail.service.js";
 
 const generateReferralCode = () => {
   return Math.random().toString(36).substring(2, 10).toUpperCase();
 };
 
 export class AuthService {
-  //   prisma: PrismaClient;
-  constructor(private prisma: PrismaClient) {
-    // this.prisma = prisma;
-  }
+  constructor(
+    private prisma: PrismaClient,
+    private mailService: MailService,
+  ) {}
 
   register = async (body: CreateUserBody) => {
     //1. Cek avaibilitas email
@@ -94,7 +96,20 @@ export class AuthService {
       });
     }
 
-    //8. Return Message Register Success
+    //8. Send welcome email
+    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    await this.mailService.sendEmail(
+      newUser.email,
+      "Welcome to Eventku! 🎉",
+      "welcome",
+      {
+        name: newUser.name,
+        referralCode: newReferralCode,
+        exploreLink: `${baseUrl}/events`,
+      },
+    );
+
+    //9. Return Message Register Success
     return { message: "Register Success" };
   };
 
@@ -129,7 +144,7 @@ export class AuthService {
       omit: { password: true },
       include: {
         points: {
-          orderBy: { createdAt: 'desc' },
+          orderBy: { createdAt: "desc" },
           take: 10, // Recent point history
         },
       },
@@ -140,5 +155,125 @@ export class AuthService {
     }
 
     return user;
+  };
+
+  /**
+   * Forgot Password - Send reset link to email
+   * Always returns generic message to prevent email enumeration
+   */
+  forgotPassword = async (email: string) => {
+    const user = await this.prisma.user.findUnique({
+      where: { email, deletedAt: null },
+    });
+
+    // Generic response even if email doesn't exist (security)
+    if (!user) {
+      return {
+        message: "If your email is registered, you will receive a reset link",
+      };
+    }
+
+    // Generate secure random token
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    // Hash token before storing (security best practice)
+    const tokenHash = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    // Set expiry to 1 hour from now
+    const expiredAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    // Store hashed token in DB
+    await this.prisma.passwordReset.create({
+      data: {
+        userId: user.id,
+        tokenHash,
+        expiredAt,
+      },
+    });
+
+    // Build reset link (raw token sent to user)
+    const baseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetLink = `${baseUrl}/reset-password?token=${rawToken}`;
+
+    // Send email (wrapped in try-catch to prevent revealing if email exists)
+    try {
+      await this.mailService.sendEmail(
+        user.email,
+        "Reset Your Password - Eventku",
+        "forgot-pass",
+        {
+          name: user.name,
+          resetLink,
+        },
+      );
+    } catch (error) {
+      // Log error but don't expose to user (security)
+    }
+
+    return {
+      message: "If your email is registered, you will receive a reset link",
+    };
+  };
+
+  /**
+   * Reset Password - Validate token and update password
+   */
+  resetPassword = async (token: string, newPassword: string) => {
+    // Hash the provided token to match against stored hash
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+
+    // Find valid token (not expired, not used)
+    const passwordReset = await this.prisma.passwordReset.findFirst({
+      where: {
+        tokenHash,
+        expiredAt: { gt: new Date() },
+        usedAt: null,
+      },
+      include: { user: true },
+    });
+
+    if (!passwordReset) {
+      throw new ApiError("Invalid or expired reset token", 400);
+    }
+
+    // Hash new password
+    const hashedPassword = await hashPassword(newPassword);
+
+    // Update password and mark token as used (transaction)
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: passwordReset.userId },
+        data: { password: hashedPassword },
+      }),
+      this.prisma.passwordReset.update({
+        where: { id: passwordReset.id },
+        data: { usedAt: new Date() },
+      }),
+    ]);
+
+    // Send notification email
+    const now = new Date();
+    await this.mailService.sendEmail(
+      passwordReset.user.email,
+      "Your Password Was Changed - Eventku",
+      "password-changed",
+      {
+        name: passwordReset.user.name,
+        date: now.toLocaleDateString("en-US", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }),
+        time: now.toLocaleTimeString("en-US", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
+      },
+    );
+
+    return { message: "Password reset successfully" };
   };
 }

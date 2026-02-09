@@ -1,5 +1,6 @@
 generator client {
-  provider = "prisma-client-js"
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
@@ -19,6 +20,7 @@ model User {
   deletedAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  refreshToken RefreshToken?
 
   // Relations
   organizer        Organizer?
@@ -27,14 +29,40 @@ model User {
   coupons          Coupon[]
   points           Point[]
   referredByUserId Int?
-  referredBy       User?          @relation("Referral", fields: [referredByUserId], references: [id])
-  referrals        User[]         @relation("Referral")
+  referredBy       User?           @relation("Referral", fields: [referredByUserId], references: [id])
+  referrals        User[]          @relation("Referral")
   wishlists        Wishlist[]
   notifications    Notification[]
   waitlists        Waitlist[]
   attendees        Attendee[]
+  passwordResets   PasswordReset[]
 
   @@map("users")
+}
+
+model PasswordReset {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  tokenHash String
+  expiredAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_resets")
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  token     String   @unique
+  userId    Int      @unique
+  user      User     @relation(fields: [userId], references: [id])
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("refresh_tokens")
 }
 
 model Organizer {

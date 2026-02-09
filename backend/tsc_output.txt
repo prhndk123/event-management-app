@@ -1,8 +1,0 @@
-src/jobs/transaction-jobs.ts(59,22): error TS1109: Expression expected.
-src/jobs/transaction-jobs.ts(59,24): error TS1109: Expression expected.
-src/jobs/transaction-jobs.ts(59,26): error TS1109: Expression expected.
-src/jobs/transaction-jobs.ts(59,43): error TS1002: Unterminated string literal.
-src/jobs/transaction-jobs.ts(61,1): error TS1128: Declaration or statement expected.
-src/jobs/transaction-jobs.ts(61,2): error TS1128: Declaration or statement expected.
-src/jobs/transaction-jobs.ts(67,1): error TS1109: Expression expected.
-src/jobs/transaction-jobs.ts(67,2): error TS1161: Unterminated regular expression literal.

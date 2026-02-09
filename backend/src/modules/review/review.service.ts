@@ -1,4 +1,4 @@
-import { PrismaClient } from "@prisma/client";
+import { PrismaClient } from "../../generated/prisma/client.js";
 import { ApiError } from "../../utils/api-error.js";
 import { CreateReviewBody } from "../../types/review.js";
 
@@ -23,7 +23,11 @@ export class ReviewService {
     return reviews;
   };
 
-  createReview = async (userId: number, eventId: number, body: CreateReviewBody) => {
+  createReview = async (
+    userId: number,
+    eventId: number,
+    body: CreateReviewBody,
+  ) => {
     const { rating, comment } = body;
 
     // Validate rating
@@ -57,7 +61,7 @@ export class ReviewService {
     if (!completedTransaction) {
       throw new ApiError(
         "You can only review events you have attended (completed transaction required)",
-        403
+        403,
       );
     }
 
