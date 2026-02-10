@@ -36,6 +36,8 @@ export class AuthRouter {
       this.validationMiddleware.validateBody(ResetPasswordDto),
       this.authController.resetPassword,
     );
+    this.router.post("/refresh", this.authController.refresh);
+    this.router.post("/logout", this.authController.logout);
   };
   getRouter = () => {
     return this.router;

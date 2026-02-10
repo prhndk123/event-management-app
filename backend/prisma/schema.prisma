@@ -8,18 +8,18 @@ datasource db {
 }
 
 model User {
-  id           Int       @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   name         String
-  email        String    @unique
+  email        String        @unique
   password     String
   avatar       String?
-  role         Role      @default(CUSTOMER)
-  referralCode String?   @unique
-  point        Int?      @default(0)
+  role         Role          @default(CUSTOMER)
+  referralCode String?       @unique
+  point        Int?          @default(0)
   phone        String?
   deletedAt    DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   refreshToken RefreshToken?
 
   // Relations
@@ -58,7 +58,7 @@ model RefreshToken {
   token     String   @unique
   userId    Int      @unique
   user      User     @relation(fields: [userId], references: [id])
-  expiresAt DateTime
+  expiredAt DateTime
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

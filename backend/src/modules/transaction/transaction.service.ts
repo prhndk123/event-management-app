@@ -19,6 +19,7 @@ export class TransactionService {
       pointsToUse = 0,
     } = body;
 
+
     // Validate quantity
     if (quantity <= 0) {
       throw new ApiError("Quantity must be greater than 0", 400);

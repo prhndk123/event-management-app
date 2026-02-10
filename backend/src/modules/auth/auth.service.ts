@@ -131,11 +131,73 @@ export class AuthService {
     //5. Generate Token dengan jwt->jsonwebtoken
     const payload = { id: user.id, role: user.role };
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
-      expiresIn: "2h",
+      expiresIn: "15m",
+    });
+    const refreshToken = jwt.sign(payload, process.env.JWT_SECRET_REFRESH!, {
+      expiresIn: "3d",
+    });
+
+    await this.prisma.refreshToken.upsert({
+      where: {
+        userId: user.id,
+      },
+      update: {
+        token: refreshToken,
+        expiredAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      },
+      create: {
+        token: refreshToken,
+        userId: user.id,
+        expiredAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
+      },
     });
     //6. Return data usernya
     const { password, ...userWithoutPassword } = user;
-    return { ...userWithoutPassword, accessToken };
+    return { ...userWithoutPassword, accessToken, refreshToken };
+  };
+
+  logout = async (refreshToken?: string) => {
+    if (!refreshToken) {
+      throw new ApiError("Invalid refresh token", 400);
+    }
+    await this.prisma.refreshToken.delete({
+      where: {
+        token: refreshToken,
+      },
+    });
+    return { message: "Logout success" };
+  };
+
+  refresh = async (refreshToken?: string) => {
+    if (!refreshToken) {
+      throw new ApiError("Invalid refresh token", 400);
+    }
+    const stored = await this.prisma.refreshToken.findUnique({
+      where: {
+        token: refreshToken,
+      },
+      include: {
+        user: true,
+      },
+    });
+    if (!stored) {
+      throw new ApiError("Refresh token not found", 400);
+    }
+
+    if (stored.expiredAt < new Date()) {
+      throw new ApiError("Refresh token expired", 400);
+    }
+
+    const payload = {
+      id: stored.user.id,
+      role: stored.user.role,
+    };
+    const newAccessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
+      expiresIn: "15m",
+    });
+    return {
+      accessToken: newAccessToken,
+    };
   };
 
   getProfile = async (userId: number) => {

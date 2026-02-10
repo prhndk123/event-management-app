@@ -10,6 +10,7 @@
  */
 export type * from './models/User.js'
 export type * from './models/PasswordReset.js'
+export type * from './models/RefreshToken.js'
 export type * from './models/Organizer.js'
 export type * from './models/Event.js'
 export type * from './models/TicketType.js'
