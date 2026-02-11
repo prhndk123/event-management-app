@@ -1,13 +1,16 @@
 import express, { Router } from "express";
 import { EventController } from "./event.controller.js";
 import { AuthMiddleware } from "../../middleware/auth.middleware.js";
+import { ValidationMiddleware } from "../../middleware/validation.middleware.js";
+import { CreateEventDto } from "./dto/create-event.dto.js";
 
 export class EventRouter {
   private router: Router;
 
   constructor(
     private eventController: EventController,
-    private authMiddleware: AuthMiddleware
+    private authMiddleware: AuthMiddleware,
+    private validationMiddleware: ValidationMiddleware
   ) {
     this.router = express.Router();
     this.initRoutes();
@@ -25,10 +28,17 @@ export class EventRouter {
     this.router.get("/:id", this.eventController.getEventById);
 
     // Protected routes (organizer only)
+    this.router.get(
+      "/me",
+      authenticate,
+      authorize(["ORGANIZER"]),
+      this.eventController.getOrganizerEvents
+    );
     this.router.post(
       "/",
       authenticate,
       authorize(["ORGANIZER"]),
+      this.validationMiddleware.validateBody(CreateEventDto),
       this.eventController.createEvent
     );
     this.router.post(

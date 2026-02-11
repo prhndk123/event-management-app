@@ -5,9 +5,41 @@ import {
   GetEventsQuery,
   CreateVoucherBody,
 } from "../../types/event.js";
+import { CreateEventDto, CreateTicketTypeDto } from "./dto/create-event.dto.js";
 
 export class EventService {
-  constructor(private prisma: PrismaClient) {}
+  constructor(private prisma: PrismaClient) { }
+
+  private getOrCreateOrganizer = async (userId: number) => {
+    let organizer = await this.prisma.organizer.findUnique({
+      where: { userId },
+    });
+
+    if (!organizer) {
+      // Fallback: Check if user has ORGANIZER role and create profile if missing
+      const user = await this.prisma.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new ApiError("User not found", 404);
+      }
+
+      if (user.role === "ORGANIZER") {
+        organizer = await this.prisma.organizer.create({
+          data: {
+            userId: user.id,
+            name: user.name,
+            avatar: user.avatar,
+          },
+        });
+      } else {
+        throw new ApiError("Organizer not found", 404);
+      }
+    }
+
+    return organizer;
+  };
 
   getEvents = async (query: GetEventsQuery) => {
     const {
@@ -134,6 +166,23 @@ export class EventService {
     };
   };
 
+  getOrganizerEvents = async (organizerId: number) => {
+    const organizer = await this.getOrCreateOrganizer(organizerId);
+
+    const events = await this.prisma.event.findMany({
+      where: { organizerId: organizer.id },
+      include: {
+        ticketTypes: true,
+        _count: {
+          select: { attendees: true }
+        }
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return events;
+  };
+
   getEventById = async (id: number) => {
     const event = await this.prisma.event.findUnique({
       where: { id },
@@ -184,44 +233,38 @@ export class EventService {
     };
   };
 
-  createEvent = async (organizerId: number, body: CreateEventBody) => {
+  createEvent = async (organizerId: number, body: CreateEventDto) => {
+    // Validate organizer exists (or create if missing for existing users)
+    const organizer = await this.getOrCreateOrganizer(organizerId);
+
     // Validate dates
     const startDate = new Date(body.startDate);
     const endDate = new Date(body.endDate);
 
-    if (endDate < startDate) {
+    if (endDate <= startDate) {
       throw new ApiError("End date must be after start date", 400);
     }
 
-    if (startDate < new Date()) {
+    if (startDate <= new Date()) {
       throw new ApiError("Start date must be in the future", 400);
     }
 
-    // Find organizer
-    const organizer = await this.prisma.organizer.findUnique({
-      where: { userId: organizerId },
-    });
-
-    if (!organizer) {
-      throw new ApiError("Organizer not found", 404);
-    }
-
-    // Create event with ticket types in transaction
-    const event = await this.prisma.$transaction(async (tx) => {
-      const newEvent = await tx.event.create({
+    // Execute single transaction
+    return await this.prisma.$transaction(async (tx) => {
+      const event = await tx.event.create({
         data: {
-          organizerId: organizer.id,
           title: body.title,
           description: body.description,
-          image: body.image,
           category: body.category,
           location: body.location,
           venue: body.venue,
           startDate,
           endDate,
-          status: "DRAFT",
+          image: body.image ?? null,
+          status: "PUBLISHED",
+          organizerId: organizer.id,
           ticketTypes: {
-            create: body.ticketTypes.map((tt) => ({
+            create: body.ticketTypes.map((tt: CreateTicketTypeDto) => ({
               name: tt.name,
               description: tt.description,
               price: tt.price,
@@ -235,7 +278,7 @@ export class EventService {
         },
       });
 
-      // Update organizer totalEvents
+      // Increment Organizer.totalEvents
       await tx.organizer.update({
         where: { id: organizer.id },
         data: {
@@ -243,10 +286,8 @@ export class EventService {
         },
       });
 
-      return newEvent;
+      return event;
     });
-
-    return event;
   };
 
   createVoucher = async (
@@ -255,13 +296,7 @@ export class EventService {
     body: CreateVoucherBody,
   ) => {
     // Verify event belongs to organizer
-    const organizer = await this.prisma.organizer.findUnique({
-      where: { userId: organizerId },
-    });
-
-    if (!organizer) {
-      throw new ApiError("Organizer not found", 404);
-    }
+    const organizer = await this.getOrCreateOrganizer(organizerId);
 
     const event = await this.prisma.event.findUnique({
       where: { id: eventId },
@@ -317,13 +352,7 @@ export class EventService {
 
   publishEvent = async (eventId: number, organizerId: number) => {
     // Find organizer
-    const organizer = await this.prisma.organizer.findUnique({
-      where: { userId: organizerId },
-    });
-
-    if (!organizer) {
-      throw new ApiError("Organizer not found", 404);
-    }
+    const organizer = await this.getOrCreateOrganizer(organizerId);
 
     // Find event and verify ownership
     const event = await this.prisma.event.findUnique({

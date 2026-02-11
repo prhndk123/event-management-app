@@ -2,9 +2,10 @@ import { Request, Response } from "express";
 import { EventService } from "./event.service.js";
 import { AuthRequest } from "../../middleware/auth.middleware.js";
 import { GetEventsQuery } from "../../types/event.js";
+import { CreateEventDto } from "./dto/create-event.dto.js";
 
 export class EventController {
-  constructor(private eventService: EventService) {}
+  constructor(private eventService: EventService) { }
 
   getEvents = async (req: Request<{}, {}, {}, GetEventsQuery>, res: Response) => {
     const query = {
@@ -35,7 +36,7 @@ export class EventController {
       return res.status(401).send({ message: "Unauthorized" });
     }
 
-    const result = await this.eventService.createEvent(req.user.id, req.body);
+    const result = await this.eventService.createEvent(req.user.id, req.body as CreateEventDto);
     res.status(201).send(result);
   };
 
@@ -56,6 +57,15 @@ export class EventController {
 
     const eventId = Number(req.params.id);
     const result = await this.eventService.publishEvent(eventId, req.user.id);
+    res.status(200).send(result);
+  };
+
+  getOrganizerEvents = async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+
+    const result = await this.eventService.getOrganizerEvents(req.user.id);
     res.status(200).send(result);
   };
 }

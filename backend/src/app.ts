@@ -79,7 +79,7 @@ export class App {
     // routes
     const authRouter = new AuthRouter(authController, validationMiddleware);
     const userRouter = new UserRouter(userController, authMiddleware);
-    const eventRouter = new EventRouter(eventController, authMiddleware);
+    const eventRouter = new EventRouter(eventController, authMiddleware, validationMiddleware);
     const transactionRouter = new TransactionRouter(
       transactionController,
       authMiddleware // Inject authMiddleware
@@ -115,6 +115,7 @@ export class App {
       ) => {
         const message = err.message || "Something went wrong!";
         const status = err.status || 500;
+        console.error(`[ERROR] ${status} - ${message}`, err);
         res.status(status).send({ message });
       },
     );

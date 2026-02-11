@@ -3,7 +3,7 @@ import { TransactionService } from "./transaction.service.js";
 import { AuthRequest } from "../../middleware/auth.middleware.js";
 
 export class TransactionController {
-  constructor(private transactionService: TransactionService) {}
+  constructor(private transactionService: TransactionService) { }
 
   createTransaction = async (req: AuthRequest, res: Response) => {
     if (!req.user) {
@@ -78,6 +78,17 @@ export class TransactionController {
     }
 
     const result = await this.transactionService.getMyTransactions(req.user.id);
+    res.status(200).send(result);
+  };
+
+  getOrganizerTransactions = async (req: AuthRequest, res: Response) => {
+    if (!req.user) {
+      return res.status(401).send({ message: "Unauthorized" });
+    }
+
+    const result = await this.transactionService.getOrganizerTransactions(
+      req.user.id
+    );
     res.status(200).send(result);
   };
 

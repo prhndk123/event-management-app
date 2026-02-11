@@ -14,7 +14,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaClient,
     private mailService: MailService,
-  ) {}
+  ) { }
 
   register = async (body: CreateUserBody) => {
     //1. Cek avaibilitas email
@@ -54,17 +54,33 @@ export class AuthService {
     } while (!isCodeUnique);
 
     //6. Create user baru
-    const newUser = await this.prisma.user.create({
-      data: {
-        name: body.name,
-        email: body.email,
-        password: hashedPassword,
-        role: body.role,
-        referralCode: newReferralCode,
-        referredByUserId: referredByUserId,
-        point: 0,
-        avatar: body.avatar,
-      },
+    //6. Create user baru (dengan transaction untuk organizer)
+    const newUser = await this.prisma.$transaction(async (tx) => {
+      const user = await tx.user.create({
+        data: {
+          name: body.name,
+          email: body.email,
+          password: hashedPassword,
+          role: body.role,
+          referralCode: newReferralCode,
+          referredByUserId: referredByUserId,
+          point: 0,
+          avatar: body.avatar,
+        },
+      });
+
+      // If role is ORGANIZER, create organizer profile
+      if (body.role === "ORGANIZER") {
+        await tx.organizer.create({
+          data: {
+            userId: user.id,
+            name: user.name,
+            avatar: user.avatar,
+          },
+        });
+      }
+
+      return user;
     });
 
     //7. If referred, reward referrer and new user

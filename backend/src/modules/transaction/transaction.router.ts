@@ -46,6 +46,12 @@ export class TransactionRouter {
       authenticate,
       this.transactionController.cancelTransaction
     );
+    this.router.get(
+      "/organizer/transactions",
+      authenticate,
+      authorize(["ORGANIZER"]),
+      this.transactionController.getOrganizerTransactions
+    );
 
     // Organizer routes
     this.router.put(

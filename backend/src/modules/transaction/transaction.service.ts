@@ -36,7 +36,7 @@ export class TransactionService {
       // Prisma doesn't support "FOR UPDATE" natively yet
       console.log(`[DEBUG] Locking ticketType ${ticketTypeId}`);
       const ticketTypes = await tx.$queryRaw<any[]>`
-        SELECT * FROM "ticket_types"
+        SELECT * FROM "backend"."ticket_types"
         WHERE id = ${ticketTypeId}
         FOR UPDATE
       `;
@@ -566,8 +566,6 @@ export class TransactionService {
     return updatedTransaction;
   };
 
-
-
   getMyTransactions = async (userId: number) => {
     const transactions = await this.prisma.transaction.findMany({
       where: { userId },
@@ -587,6 +585,43 @@ export class TransactionService {
             },
           },
         },
+        ticketType: true,
+        voucher: true,
+        coupon: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return transactions;
+  };
+
+  getOrganizerTransactions = async (userId: number) => {
+    // 1. Get organizer profile
+    const organizer = await this.prisma.organizer.findUnique({
+      where: { userId },
+    });
+
+    if (!organizer) {
+      throw new ApiError("Organizer not found", 404);
+    }
+
+    // 2. Get all transactions for events belonging to this organizer
+    const transactions = await this.prisma.transaction.findMany({
+      where: {
+        event: {
+          organizerId: organizer.id,
+        },
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            avatar: true,
+          },
+        },
+        event: true,
         ticketType: true,
         voucher: true,
         coupon: true,

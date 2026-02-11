@@ -20,6 +20,7 @@ import { MediaController } from "./modules/media/media.controller.js";
 import { MediaRouter } from "./modules/media/media.router.js";
 import { AuthMiddleware } from "./middleware/auth.middleware.js";
 import { ValidationMiddleware } from "./middleware/validation.middleware.js";
+import { UploadMiddleware } from "./middleware/uploader.middleware.js";
 import { CloudinaryService } from "./modules/cloudinary/cloudinary.service.js";
 import { MailService } from "./modules/mail/mail.service.js";
 import { Scheduler } from "./jobs/scheduler.js";
@@ -56,16 +57,16 @@ export class App {
         // middlewares
         const authMiddleware = new AuthMiddleware();
         const validationMiddleware = new ValidationMiddleware();
+        const uploadMiddleware = new UploadMiddleware();
         // routes
         const authRouter = new AuthRouter(authController, validationMiddleware);
         const userRouter = new UserRouter(userController, authMiddleware);
         const eventRouter = new EventRouter(eventController, authMiddleware);
-        const transactionRouter = new TransactionRouter(transactionController, authMiddleware // Inject authMiddleware
-        );
+        const transactionRouter = new TransactionRouter(transactionController, authMiddleware);
         const reviewRouter = new ReviewRouter(reviewController, authMiddleware); // Inject authMiddleware
         // media
-        const mediaController = new MediaController();
-        const mediaRouter = new MediaRouter(mediaController);
+        const mediaController = new MediaController(cloudinaryService);
+        const mediaRouter = new MediaRouter(mediaController, uploadMiddleware);
         // entry point
         this.app.use("/auth", authRouter.getRouter());
         this.app.use("/users", userRouter.getRouter());
